@@ -1,20 +1,16 @@
+import logging
 import serial
 import time
 from multiprocessing import Array, Process
 
 
-def shared_memory():
-    return Array('i',[0])
-
 def pusher(data):
     last = [0]
 
-    print ("Opening serial port")
+    logging.info("Trying to open the serial port ...")
 
     ser = serial.Serial('COM6', 9600)
     time.sleep(2)
-
-    print(ser.isOpen())
 
     while True:
         if last == data[:]:
@@ -28,8 +24,10 @@ def pusher(data):
         last = data[:]
 
 
-def start_pushing(data):
-    p = Process(target=pusher, args=(data,))
-    p.start()
+class ArduinoConnection():
+    def __init__(self):
+        self._shared_memory = Array('i', [0])
 
-    return p
+    def open(self):
+        self._process = Process(target=pusher, args=(self._shared_memory,))
+        self._process.start()

@@ -5,9 +5,9 @@ import os
 
 class EffectLoader:
     def __init__(self, directory):
-        self._directory = directory
+        self._directory = os.path.join(os.path.dirname(__file__), directory)
+        self._package = directory
         self._effects = {}
-
 
     def load_from_file(self, filename):
         mod_name = filename[:-3]
@@ -20,8 +20,10 @@ class EffectLoader:
                     module = reload(self.get(mod_name))
                     module.hash = self.hash_of_file((filename))
 
-            package = __import__('effects.' + mod_name)
-            mod = getattr(package, mod_name)
+            logging.info("Trying to load module %s" % mod_name)
+
+            _tmp = __import__('effects.repository', globals(), locals(), [mod_name])
+            mod = getattr(_tmp, mod_name)
 
             assert hasattr(mod, 'effects')
             assert isinstance(mod.effects, list)
@@ -30,10 +32,12 @@ class EffectLoader:
             mod.hash = self.hash_of_file(filename)
             self._effects[mod_name] = mod
 
+            logging.info(" - %s"%mod_name)
+
         except Exception, e:
             del self._effects[mod_name]
 
-            logging.error("Could not load module: {}".format(mod_name))
+            logging.error("Could not load module %s"%mod_name)
             logging.exception(e)
 
             return False
@@ -41,6 +45,8 @@ class EffectLoader:
         return True
 
     def load_all(self):
+
+        logging.info("Loading effects")
         for f in os.listdir(self._directory):
             if os.path.isfile(self.full_path(f)) and f.endswith('.py') and not f == '__init__.py':
                 self.load_from_file(f)
