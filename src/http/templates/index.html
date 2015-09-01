@@ -1,16 +1,24 @@
-<!doctype html>
-<html>
-<head>
-<title>FeestInvader</title>
-</head>
-<body>
-    <h1>FeestInvader</h1>
+{% include 'header.html' %}
 
-    <h3>Effects</h3>
-    <ul>
-    {% for name,effect in effects.iteritems() %}
-        <li><a href="">{{name}}</a></li>
-    {% endfor %}
-    </ul>
-</body>
-</html>
+<table>
+<thead>
+<tr>
+  <th>Program</th>
+</tr>
+</thead>
+<tbody>
+{% for program in programs %}
+    <tr>
+        <td><a href="{{url_for('program', name=program.name()) }}">{{program.name()}}</a></td>
+        <td></td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+
+<form method="POST" action="{{ url_for('program_new') }}">
+    <input type="text" name="name" placeholder="name">
+    <input type="submit" value="Add">
+</form>
+
+{% include 'footer.html' %}

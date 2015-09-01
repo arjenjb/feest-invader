@@ -1,0 +1,105 @@
+body {
+    color: #757575;
+    font-family: 'Roboto','Helvetica','Arial',sans-serif!important;
+    background-color: #FAFAFA;
+    font-size: 13px;
+}
+
+.fa {
+    font-size: 1.3em;
+    color: #757575;
+}
+
+.configuration-box {
+    background-color: white;
+    margin-bottom: 1em;
+    display: block;
+    position: relative;
+}
+
+.configuration-box .controls {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+}
+
+.configuration-box:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+}
+
+.box-panel .button-remove {
+    float:right;
+}
+
+.box-panel {
+    display: block;
+    float: left;
+}
+
+.box-panel > div {
+    margin: 1em;
+    margin-right: 0;
+    border: 2px solid #1976D2;
+    padding: 20px;
+}
+
+.box-1 {
+    width: 33%;
+}
+
+.box-2 {
+    width: 66%;
+}
+
+.box-3 {
+    width: 100%;
+}
+
+.panel {
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
+}
+
+table.table-widget {
+    width: 100%;
+
+    position: relative;
+    border: 1px solid rgba(0,0,0,.12);
+    border-collapse: collapse;
+    white-space: nowrap;
+    font-size: 13px;
+    background-color: #fff;
+    -webkit-transform: translate3d(0,0,0);
+}
+
+table.table-widget tbody tr {
+    -webkit-transition-duration: .28s;
+    transition-duration: .28s;
+    -webkit-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+    transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+    -webkit-transition-property: background-color;
+    transition-property: background-color;
+}
+
+table.table-widget tbody tr:hover {
+    background-color: #eee;
+}
+
+table.table-widget td,
+table.table-widget th {
+    padding: 1em 1em;
+    text-align: left;
+}
+
+table.table-widget tbody td {
+    border-top: 1px solid rgba(0,0,0,.12);
+}
+
+form {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
