@@ -13,14 +13,26 @@ app = Flask(__name__, static_url_path='', static_folder=root + '/web')
 app.add_url_rule('/', 'root', lambda: app.send_static_file('index.html'))
 
 
-@app.route('/api/program', methods=['POST', 'GET'])
+@app.route('/api/program/<uid>', methods=['DELETE'])
+def delete_program_api(uid):
+    app.access_base.remove_program(uid)
+    result = ({'status': '0'})
+
+    return Response(json.dumps(result),
+                    mimetype='application/json',
+                    headers={'Cache-Control': 'no-cache'})
+
+
+@app.route('/api/program', methods=['POST','GET'])
 def program_api():
     if request.method == 'POST':
         obj = json.loads(request.data)
         app.access_base.add_program(Program.from_json(obj))
         result = ({'status': '0'})
+
     elif request.method == 'GET':
         result = [p.to_json() for p in app.access_base.programs()]
+
     else:
         result = {"status": 1, "message": "Invalid request"}
 

@@ -27,6 +27,9 @@ class KnipperEffect():
         self._sine = SineWave(upper=50, lower=1, step=0.2)
         self._toggler = Toggle()
 
+    def ticks_per_iteration(self):
+        return self._sine.ticks_per_wave()
+
     def tick(self):
         self.controller.contour.set_state(self._bitmask, self._toggler.next())
         time.sleep(0.001 * self._sine.next())

@@ -20,18 +20,21 @@ class SineWave:
         self._lower = lower
 
         self._range = (self._upper - self._lower)
-        self._max_iterations = int(self._range / step)
-        self._step = math.pi * 2 / self._max_iterations
+        self._max = int(self._range / step)
+        self._step = math.pi * 2 / self._max
 
         self._value = 0.0
-        self._iteration = 0
+        self._i = 0
+
+    def ticks_per_wave(self):
+        return self._max
 
     def next(self):
         self._value += self._step
-        self._iteration += 1
+        self._i += 1
 
-        if self._iteration == self._max_iterations:
-            self._iteration = 0
+        if self._i == self._max:
+            self._i = 0
             self._value = 0
 
         return round(

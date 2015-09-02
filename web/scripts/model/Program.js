@@ -38,6 +38,12 @@ define(['tools/random', 'tools/json', 'model/EffectConfiguration'], function(ran
 			return this._data.name;
 		},
 
+        withName: function(name) {
+            var data = this.clone();
+            data._data.name = name;
+            return data;
+        },
+
         configurations: function() {
             return this._data.configurations;
 		},

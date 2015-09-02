@@ -7,6 +7,7 @@ class Configuration():
     def __init__(self, filename):
         self._filename = filename
         self._storage = self.load()
+        self._iterations = None
 
     def programs(self):
         return self._storage.programs()

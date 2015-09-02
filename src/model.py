@@ -100,7 +100,7 @@ class ReadWriteAccessBase(AbstractAccessBase):
 
     def remove_program(self, uid):
         with self.write_lock():
-            os.remove('{}/program/{}.json'.format(self._path, uid()))
+            os.remove('{}/program/{}.json'.format(self._path, uid))
         self.notify_changed()
 
     def notify_changed(self):
@@ -160,7 +160,6 @@ class ParameterDefinition(object):
             'options': self._options,
         }
 
-
 class BooleanParameter(ParameterDefinition):
     def __init__(self, name):
         ParameterDefinition.__init__(self, name, 'boolean', {})
@@ -176,12 +175,18 @@ class NumberParameter(ParameterDefinition):
         ParameterDefinition.__init__(self, name, 'number', {'min': min, 'max': max, })
 
 
+class ScheduleIterations:
+    def __init__(self, iterations):
+        pass
+
+
 class EffectConfiguration:
-    def __init__(self, uid, index, effects, parameters):
+    def __init__(self, uid, index, effects, parameters, schedule):
         self._uid = uid
         self._index = index
         self._effects = effects
         self._parameters = parameters
+        self._schedule = schedule
 
     def uid(self):
         return self._uid
@@ -192,7 +197,8 @@ class EffectConfiguration:
             object['uid'],
             object['index'],
             object['effects'],
-            object['parameters']
+            object['parameters'],
+            object['schedule']
         )
 
     def to_json(self):
@@ -200,7 +206,8 @@ class EffectConfiguration:
             'uid': self._uid,
             'index': self._index,
             'effects': self._effects,
-            'parameters': self._parameters
+            'parameters': self._parameters,
+            'schedule': self._schedule
         }
 
     def effects(self):

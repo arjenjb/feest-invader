@@ -11,6 +11,8 @@ define([
 		this.listeners = {
 			programChanged: [],
 			programAdded: [],
+			programRemoved: [],
+
             programsLoaded: [],
             modeChanged: [],
 		};
@@ -46,6 +48,10 @@ define([
 
         ab.addListener('programAdded', function(added) {
             client.addProgram(added);
+        });
+
+        ab.addListener('programRemoved', function(program) {
+            client.removeProgram(program);
         });
 
         return ab;
@@ -117,11 +123,22 @@ define([
 		this.notifyListeners('programAdded', program);
 	};
 
+    AccessBase.prototype.removeProgram = function(program) {
+        this._programs = this._programs.filter(function(each) {
+            return each.uid() != program.uid()
+        });
+
+        this.notifyListeners('programRemoved', program);
+    };
+
 	AccessBase.prototype.updateProgram = function(from, to) {
 		this._programs = this._programs.filter(function(each) {
 			return each.uid() != from.uid()
 		});
-		this._programs.push(to);
+
+        if (to !== null) {
+            this._programs.push(to);
+        }
 
 		this.notifyListeners('programChanged', from, to);
 	};

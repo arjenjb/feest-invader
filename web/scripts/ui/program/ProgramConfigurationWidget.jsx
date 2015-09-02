@@ -246,6 +246,15 @@ define([
             return this.props.config.uid()+'-'+effectName;
         },
 
+        renderSchedulePanel: function() {
+            return (<div>
+                <select>
+                    <option value="iterations">iterations</option>
+                    <option value="delay">delay (ms)</option>
+                </select>
+            </div>);
+        },
+
         renderEffectPanel: function(effect) {
             var parameters = effect.parameters().map(function(definition) {
                 var parameterName = definition.name();
@@ -289,6 +298,8 @@ define([
                         <div className="controls">
                             <a href="#" onClick={this.play}><i className="fa fa-play"></i></a>
                         </div>
+
+                        {this.renderSchedulePane()}
 
                         {this.effects().map(this.renderEffectPanel)}
                         {this.renderNewEffectPanel()}

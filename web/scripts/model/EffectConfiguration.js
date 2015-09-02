@@ -1,6 +1,9 @@
-define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random, json, ParameterValue) {
+define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'], function (random, json, ParameterValue, Schedule) {
 
-    var mapping = {'parameters': ParameterValue};
+    var mapping = {
+        'parameters': ParameterValue,
+        'schedule': Schedule
+    };
 
     function EffectConfiguration(data, accessBase) {
         this._data = data;
@@ -16,6 +19,10 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
         }, accessBase);
     };
 
+    EffectConfiguration.prototype.toJSON = function () {
+        return json.marshall(this._data, mapping);
+    };
+
     EffectConfiguration.fromJSON = function (object, accessBase) {
         return new EffectConfiguration(
             json.unmarshall(object, mapping, accessBase),
@@ -23,9 +30,17 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
         );
     };
 
+    //
+    // Utilities
+    //
+
     EffectConfiguration.prototype.clone = function () {
         return new EffectConfiguration(jQuery.extend({}, this._data), this.accessBase);
     };
+
+    //
+    // Accessing
+    //
 
     EffectConfiguration.prototype.uid = function () {
         return this._data.uid;
@@ -33,6 +48,17 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
 
     EffectConfiguration.prototype.index = function () {
         return this._data.index;
+    };
+
+    EffectConfiguration.prototype.schedule = function() {
+        return this._data.schedule;
+    };
+
+    EffectConfiguration.prototype.withSchedule = function(schedule) {
+        var clone = this.clone();
+        clone._data.schedule = schedule;
+
+        return clone;
     };
 
     EffectConfiguration.prototype.program = function () {
@@ -46,6 +72,10 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
             return this.program().updateConfiguration(this, config);
         }
     };
+
+    //
+    // Effects
+    //
 
     EffectConfiguration.prototype.effects = function () {
         return this._data.effects
@@ -77,6 +107,10 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
         return this.withoutEffect(from).withEffect(to);
     };
 
+    //
+    // Componetns
+    //
+
     EffectConfiguration.prototype.getUsedCompontents = function () {
         return this.effects().reduce(function (prev, element) {
             return prev.concat(element.components());
@@ -91,6 +125,10 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
             return used.indexOf(each) == -1
         });
     };
+
+    //
+    // Parameters
+    //
 
     EffectConfiguration.prototype.parameters = function () {
         return this._data.parameters;
@@ -121,10 +159,6 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
         parameters.push(ParameterValue.new(effect, name, value));
 
         return this.withParameters(parameters);
-    };
-
-    EffectConfiguration.prototype.toJSON = function () {
-        return json.marshall(this._data, mapping);
     };
 
     return EffectConfiguration;

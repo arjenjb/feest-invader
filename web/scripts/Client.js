@@ -26,6 +26,13 @@ define([
         });
     };
 
+    Client.prototype.removeProgram = function(program) {
+        $.ajax({
+            url: this._url + '/program/' + program.uid(),
+            type: 'DELETE'
+        });
+    };
+
     Client.prototype.addProgram = function (program) {
         $.ajax({
             url: this._url + '/program',

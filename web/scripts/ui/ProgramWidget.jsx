@@ -6,6 +6,46 @@ define([
 
 ], function(React, EffectConfiguration, form, ProgramConfigurationWidget) {
 
+    var EditableLabel = React.createClass({
+        getInitialState: function() {
+            return {
+                edit: false,
+                value: this.props.value
+            };
+        },
+
+        render: function() {
+            if (this.state.edit) {
+                return <input type="text" value={this.state.value} onChange={this.handleChange} onBlur={this.handleBlur}/>
+            } else {
+                return <a href="#" onClick={this.switchEditMode}>{this.label()}</a>
+            }
+        },
+
+        switchEditMode: function() {
+            this.setState({edit: true});
+        },
+
+        switchViewMode: function() {
+            this.setState({edit: false});
+        },
+
+        handleBlur: function() {
+            this.props.onChange(this.state.value);
+            this.switchViewMode();
+        },
+
+        handleChange: function(event) {
+            this.setState({
+                value: event.target.value
+            })
+        },
+
+        label: function() {
+            return this.props.value || <i>{this.props.emptyLabel}</i>;
+        }
+    });
+
 	var EffectFormWidget = React.createClass({
 
 		getInitialState: function() {
@@ -50,7 +90,7 @@ define([
 		},
 
 		handleDelete: function() {
-			this.props.accessBase.deleteProgram(this.props.program)
+			this.props.accessBase.removeProgram(this.props.program);
 			this.handleClose()
 		},
 
@@ -70,10 +110,19 @@ define([
 			)
 		},
 
+        handleTitleChange: function(title) {
+            var program = this.props.program;
+            var accessBase = this.props.accessBase;
+
+            var newProgram = this.props.program.withName(title);
+            accessBase.updateProgram(program, newProgram);
+        },
+
 		render: function() {
 			return (
 				<div>
-					<h2>{this.props.program.name()}</h2>
+                    <h2><EditableLabel value={this.props.program.name()} emptyLabel="No title given" onChange={this.handleTitleChange} /></h2>
+
 					<p>
 						<a href="#" onClick={this.handleClose}>Back</a> | <a href="#" onClick={this.handleDelete}>Delete</a>
 					</p>
