@@ -1,6 +1,25 @@
 import math
 
 
+class Range:
+    def __init__(self, upper, lower=0):
+        self._upper = upper
+        self._lower = lower
+        self._i = lower - 1
+
+    def next(self):
+        self._i += 1
+
+        # Reached upper limit?
+        if self._i == self._upper:
+            self._i = self._lower
+
+        return self._i
+
+    def ticks(self):
+        return self._upper - self._lower
+
+
 class Toggle:
     def __init__(self):
         self._state = False

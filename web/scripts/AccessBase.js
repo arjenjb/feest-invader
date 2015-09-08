@@ -1,11 +1,12 @@
 define([
         'model/Program',
-        'model/Effect',
+        'model/EffectDescriptor',
         'model/EffectConfiguration',
         'model/ParameterFactory',
+        'model/Mode',
         'tools/random',
         'tools/validator'
-], function(Program, Effect, EffectConfiguration, ParameterFactory, random, validator) {
+], function(Program, EffectDescriptor, EffectConfiguration, ParameterFactory, Mode, random, validator) {
 
 	function AccessBase() {
 		this.listeners = {
@@ -14,7 +15,7 @@ define([
 			programRemoved: [],
 
             programsLoaded: [],
-            modeChanged: [],
+            modeChanged: []
 		};
 
         this._mode = [];
@@ -61,17 +62,17 @@ define([
 		var accessBase = new AccessBase();
 
 		accessBase._effects = [
-			Effect.new('entropy', ['contour', 'wings']),
-			Effect.new('knipper', ['contour']),
-			Effect.new('fader body', ['fader'], [
+			EffectDescriptor.new('entropy', ['contour', 'wings']),
+			EffectDescriptor.new('knipper', ['contour']),
+			EffectDescriptor.new('fader body', ['fader'], [
                 ParameterFactory.number('upper_bound', {max: 255}),
                 ParameterFactory.number('lower_bound', {max: 255})
             ]),
-			Effect.new('alternate body', ['fader'], [ParameterFactory.choice('mode', {choices: ['fadein', 'fadeout', 'onoff']})]),
-			Effect.new('alternate wings', ['wings']),
-			Effect.new('loop omlaag', ['wings']),
-			Effect.new('loop omhoog', ['wings']),
-			Effect.new('random wings', ['wings'])
+			EffectDescriptor.new('alternate body', ['fader'], [ParameterFactory.choice('mode', {choices: ['fadein', 'fadeout', 'onoff']})]),
+			EffectDescriptor.new('alternate wings', ['wings']),
+			EffectDescriptor.new('loop omlaag', ['wings']),
+			EffectDescriptor.new('loop omhoog', ['wings']),
+			EffectDescriptor.new('random wings', ['wings'])
 		];
 
 		for (var i = 0; i < 5; i++) {
@@ -101,7 +102,7 @@ define([
 	AccessBase.prototype.getEffectByName = function(name) {
 		var effect = this.effects().find(function(each) { return each.name() == name; });
         if (effect == null) {
-            console.warn("Effect named '" + name + "' not found");
+            console.warn("EffectDescriptor named '" + name + "' not found");
         }
 
         return effect;
@@ -156,6 +157,16 @@ define([
         this.updateProgram(newProgram, newProgram);
     };
 
+    AccessBase.prototype.setScheduleForConfig = function(config, schedule) {
+        validator.argument
+            .objectType('config', config, EffectConfiguration)
+
+        var newConfig = config.withSchedule(schedule);
+        var newProgram = config.replaceInProgramWith(newConfig);
+
+        this.updateProgram(newProgram, newProgram);
+    };
+
     AccessBase.prototype.updateEffectInConfig = function(config, oldEffectName, newEffectName) {
         validator.argument
             .typeString('oldEffectName', oldEffectName)
@@ -178,6 +189,14 @@ define([
 
         this.updateProgram(newProgram, newProgram);
     };
+
+    //
+    // Stop/Play
+    //
+
+    AccessBase.prototype.stop = function() {
+        this.setMode(Mode.stop())
+    },
 
     AccessBase.prototype.setMode = function(to) {
         var from = this._mode;

@@ -1,13 +1,50 @@
+
 body {
     color: #757575;
     font-family: 'Roboto','Helvetica','Arial',sans-serif!important;
     background-color: #FAFAFA;
     font-size: 13px;
+    margin: 0;
+}
+
+#content {
+    padding: 2em;
+}
+
+a {
+    color: #757575;
+    text-decoration: none;
+}
+
+a:hover {
+    background-color: #ffeb3b;
 }
 
 .fa {
     font-size: 1.3em;
     color: #757575;
+}
+
+header {
+    padding: 1em 2em;
+    background-color: #455A64;
+}
+
+h1 {
+    margin: 0;
+    color: white;
+    font-weight: 300;
+    font-size: 36px;
+}
+
+.controls.main
+{
+    float: right;
+    padding-right: 1em;
+}
+
+.controls.i {
+    margin-left: 1em;
 }
 
 .configuration-box {
@@ -21,6 +58,20 @@ body {
     position: absolute;
     right: 12px;
     top: 12px;
+}
+
+.controls i {
+    color: #2196f3;
+}
+
+.schedule-pane {
+    padding-left: 1em;
+    padding-top: 1em;
+}
+
+.schedule-pane .value-input {
+    width: 60px;
+    margin-right: 1em;
 }
 
 .configuration-box:after {

@@ -3,10 +3,16 @@ define(function() {
        marshall: function(object, mapping) {
            var obj = $.extend({}, object);
            Object.keys(mapping).forEach(function(prop) {
-               if (Array.isArray(obj[prop])) {
+
+               if (obj[prop] == null) {
+                   return null;
+
+               } else if (Array.isArray(obj[prop])) {
                    obj[prop] = obj[prop].map(function(each) {
                        return each.toJSON();
                    })
+               } else if ('toJSON' in obj[prop]) {
+                   return obj[prop].toJSON();
                } else {
                    debugger;
                }
@@ -22,14 +28,16 @@ define(function() {
                 if (key in mapping) {
                     var type = mapping[key];
 
-                    if (Array.isArray(object[key])) {
+                    if (object[key] == null) {
+                        return;
+
+                    } else if (Array.isArray(object[key])) {
                         data[key] = object[key].map(function(each) {
                             return type.fromJSON(each, accessBase);
                         });
                     } else {
-                        debugger;
+                        data[key] = type.fromJSON(object[key], accessBase);
                     }
-
                 }
             });
 

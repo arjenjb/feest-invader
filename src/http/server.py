@@ -43,7 +43,10 @@ def program_api():
 def mode_api():
     if request.method == 'POST':
         obj = json.loads(request.data)
-        app.access_base.set_mode(Mode.from_json(obj))
+        mode = Mode.from_json(obj)
+
+        app.logger.info('Web mode: {}'.format(str(mode)))
+        app.access_base.set_mode(mode)
         result = ({'status': '0'})
     else:
         result = app.access_base.mode().to_json()
@@ -62,5 +65,5 @@ def effect_api():
 
 def start(access_base):
     app.access_base = access_base
-    app.debug = True
+    app.debug = False
     app.run(port=int(os.environ.get("PORT", 3000)))

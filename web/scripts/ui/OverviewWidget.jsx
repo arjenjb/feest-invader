@@ -2,8 +2,9 @@ define([
 	'react',
 	'model/Program',
 	'jsx!ui/component/form',
-	'jsx!ui/component/Table'
-], function(React, Program, form, Table) {
+	'jsx!ui/component/Table',
+	'jsx!ui/Controls'
+], function(React, Program, form, Table, Controls) {
 
 	var MyForm = React.createClass({
 
@@ -48,8 +49,9 @@ define([
 
 	      return (
 	        <div>
-	          <Table className="panel" rows={this.props.programs} columns={columns} rowKey={key} onClickRow={this.openProgram} />
-	          <MyForm onSubmit={this.handleAddProgram} />
+				<Controls accessBase={this.props.accessBase} />
+				<Table className="panel" rows={this.props.programs} columns={columns} rowKey={key} onClickRow={this.openProgram} />
+				<MyForm onSubmit={this.handleAddProgram} />
 	        </div>
 	      )
 	    },

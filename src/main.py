@@ -1,57 +1,52 @@
 import os
 import threading
-from serial import SerialException
-from components import Controller
 import logging
+
+from serial import SerialException
+
+from components import Controller
 import connection
 from effects import EffectenBak
 import http
-from model import ReadWriteAccessBase
+from model import AccessBaseManager, Mode
 
-# if __name__ == '__main__':
-#     conn = connection.ArduinoConnection()
-#     conn.open()
-#
-#
-#
-#     root = os.path.dirname(__file__)
-#     config_file = os.path.join(root, '..', 'state', 'config.json')
-#     accessbase_path = os.path.join(root, '..', 'state')
-#
-#
-#     bak = EffectenBak(Controller(conn))
-#     ab = AccessBase(accessbase_path, bak)
-#
-#     bak.play_configuration(EffectConfiguration('38388383', 1, ['knipper'], {}))
-#
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def effectbak_runner(accessbase):
-
-    conn = connection.ArduinoConnection()
+    #conn = connection.ArduinoConnection()
+    conn = connection.MockConnection()
 
     try:
         conn.open()
+        logging.info("Serial connection opened")
     except SerialException as e:
         logging.error("Could not open serial port", str(e))
 
-    logging.info("Serial connection opened")
-    bak = EffectenBak(Controller(conn), accessbase)
+    controller = Controller(conn)
+    controller.contour.all(False)
+    controller.wings.all(False)
+
+    bak = EffectenBak(controller, accessbase)
     bak.run()
 
-
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-
     root = os.path.dirname(__file__)
     accessbase_path = os.path.join(root, '..', 'state')
 
-    mainAccessBase = ReadWriteAccessBase(accessbase_path)
+    access_base = AccessBaseManager(accessbase_path)
+    server_accessor = access_base.accessor('server')
+    effect_accessor = access_base.accessor('effectenbak')
+
+    # Stop
+    effect_accessor.set_mode(Mode.stop())
+
+    access_base.change_watcher()
 
     logging.info("Starting effectenbak thread")
-    effectenbak = threading.Thread(target=effectbak_runner, args=(mainAccessBase.reader(), ))
+    effectenbak = threading.Thread(target=effectbak_runner, args=(effect_accessor, ))
     effectenbak.start()
 
     logging.info("Starting http server")
-    http.server.start(mainAccessBase)
 
-
+    http.server.start(server_accessor)

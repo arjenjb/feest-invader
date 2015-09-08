@@ -1,8 +1,9 @@
 define([
     'model/parameter/NumberParameter',
     'model/parameter/ChoiceParameter',
-    'model/parameter/BooleanParameter'
-], function(NumberParameter, ChoiceParameter, BooleanParameter) {
+    'model/parameter/BooleanParameter',
+    'model/parameter/ProgramParameter'
+], function(NumberParameter, ChoiceParameter, BooleanParameter, ProgramParameter) {
 
     return {
         number: function(name, options) {
@@ -15,6 +16,10 @@ define([
 
         boolean: function(name, options) {
             return new BooleanParameter(name, options);
+        },
+
+        boolean: function(name, options) {
+            return new ProgramParameter(name, options);
         }
     }
 });

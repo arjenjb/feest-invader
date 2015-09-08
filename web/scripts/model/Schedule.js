@@ -1,19 +1,27 @@
-define(['model/ScheduleIterations', 'model/ScheduleDelay'], function(ScheduleIterations, ScheduleDelay) {
+define(['model/ScheduleIterations', 'model/ScheduleDuration'], function(ScheduleIterations, ScheduleDuration) {
+
+    var map = {
+        'iterations': ScheduleIterations,
+        'duration': ScheduleDuration
+    };
 
     var Schedule = function() {
 
     };
 
+    Schedule.type = function(type) {
+        if (! type) {
+            return null;
+        }
+        
+        return map[type].new();
+    };
+
     Schedule.fromJSON = function(data) {
         if (! data) {
             return null;
-        } else if (data['type'] == 'iterations') {
-            return ScheduleIterations.fromJSON(data);
-        } else if (data['type'] == 'delay') {
-            return ScheduleDelay.fromJSON(data);
         }
-
-        return null;
+        return map[data['type']].fromJSON(data);
     };
 
     return Schedule;

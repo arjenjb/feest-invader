@@ -1,10 +1,12 @@
 define([
 	'react',
 	'model/EffectConfiguration',
+	'model/Mode',
 	'jsx!ui/component/form',
-	'jsx!ui/program/ProgramConfigurationWidget'
+	'jsx!ui/program/ProgramConfigurationWidget',
+	'jsx!ui/Controls'
 
-], function(React, EffectConfiguration, form, ProgramConfigurationWidget) {
+], function(React, EffectConfiguration, Mode, form, ProgramConfigurationWidget, Controls) {
 
     var EditableLabel = React.createClass({
         getInitialState: function() {
@@ -98,8 +100,8 @@ define([
 			var program = this.props.program;
 			var accessBase = this.props.accessBase;
 
-			var config = EffectConfiguration.effects([name], accessBase)
-			var newProgram = program.withConfiguration(config)
+			var config = EffectConfiguration.effects([name], accessBase);
+			var newProgram = program.withConfiguration(config);
 
 			accessBase.updateProgram(program, newProgram);
 		},
@@ -118,9 +120,16 @@ define([
             accessBase.updateProgram(program, newProgram);
         },
 
+		handleOnPlay: function() {
+			this.props.accessBase.setMode(
+				Mode.playProgram(this.props.program))
+		},
+
 		render: function() {
 			return (
 				<div>
+					<Controls accessBase={this.props.accessBase} onPlay={this.handleOnPlay} />
+
                     <h2><EditableLabel value={this.props.program.name()} emptyLabel="No title given" onChange={this.handleTitleChange} /></h2>
 
 					<p>
@@ -137,5 +146,4 @@ define([
 			)
 		}
 	})
-
-})
+});

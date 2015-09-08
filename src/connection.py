@@ -4,29 +4,32 @@ import time
 from multiprocessing import Array, Process
 import struct
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 def pusher(data):
     last = [0] * 4
-
-    logging.info("Trying to open the serial port ...")
+    logger.info("Trying to open the serial port ...")
 
     ser = serial.Serial('COM6', 115200)
     time.sleep(2)
 
-    logging.info("Resetting arduino")
+    logger.info("Resetting arduino")
 
     ser.write(struct.pack('3B', 0, 0, 0))
 
-    logging.info("Starting pusher loop")
+    logger.info("Starting pusher loop")
 
     while True:
         if last == data[:]:
             continue
-            
+
         # Writing data
-        for i in range(3):
+        for i in range(4):
             if last[i] != data[i]:
-                ser.write(struct.pack('2B', i+1, data[i]))
+                ser.write(struct.pack('2B', i + 1, data[i]))
                 last[i] = data[i]
+
 
 class ArduinoConnection():
     def __init__(self):
@@ -40,3 +43,12 @@ class ArduinoConnection():
         self._process.start()
 
 
+class MockConnection(object):
+    def __init__(self):
+        pass
+
+    def write(self, index, value):
+        pass
+
+    def open(self):
+        logger.info("Mock connection opened")

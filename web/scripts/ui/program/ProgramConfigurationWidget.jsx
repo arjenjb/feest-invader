@@ -1,94 +1,69 @@
 define([
     'react',
-    'ui/component/form',
     'tools/validator',
+    'ui/component/form',
+    'jsx!./ParameterInputRenderer',
     'model/ParameterValue',
-    'model/Mode'
-    ], function(React, form, validator, ParameterValue, Mode) {
+    'model/Mode',
+    'model/Schedule'
+    ], function(React, validator, form, ParameterInputRenderer, ParameterValue, Mode, Schedule) {
 
-    var ChoiceParameterWidget = React.createClass({
-        handleValueChange: function(event) {
-            this.props.onValueChange(event.target.value);
-        },
-        render: function() {
-           return (
-               <select value={this.props.value} onChange={this.handleValueChange}>
-                   {this.props.choices.map(function(each) {
-                       return <option value={each}>{each}</option>
-                   })}
-               </select>
-           );
-       }
-    });
 
-    var NumberParameterWidget = React.createClass({
-        handleValueChange: function(event) {
-            this.props.onValueChange(event.target.value);
+    var SchedulePanel = React.createClass({
+
+        //
+        // Handlers
+        //
+        handleTypeChanged: function(event) {
+            var type = event.target.value;
+            this.props.onScheduleChanged(Schedule.type(type))
         },
 
         render: function() {
-            var min = this.props.min || 0;
-            var max = this.props.max || (1<<31 - 1);
 
-            return (
-                <div>
-                    <input type="number" min={min} max={max} step="1" value={this.props.value} onChange={this.handleValueChange} size="6" />
-                    <input type="slider" min={min} max={max} value={this.props.value} onChange={this.handleValueChange} />
-                </div>
-            );
+            var type = this.props.schedule ? this.props.schedule.type() : null;
+
+            return <div className="schedule-pane">
+                {this.renderValue()}
+
+                <select value={type} onChange={this.handleTypeChanged}>
+                    <option value=""></option>
+                    <option value="iterations">iterations</option>
+                    <option value="duration">duration (ms)</option>
+                </select>
+            </div>
+        },
+
+        renderValue: function() {
+            if (! this.props.schedule) {
+                return <span/>
+
+            } else if (this.props.schedule.type() == 'iterations') {
+                return this.renderIterationsValue();
+
+            } else {
+                return this.renderDurationValue();
+            }
+        },
+
+        renderIterationsValue: function() {
+            var handleValueChanged = function(event) {
+                var n = event.target.value;
+                this.props.onScheduleChanged(this.props.schedule.withIterations(n));
+            }.bind(this);
+
+            return <input className="value-input" type="number" value={this.props.schedule.iterations()} placeholder="#" onChange={handleValueChanged} />
+        },
+
+        renderDurationValue: function() {
+            var handleValueChanged = function(event) {
+                var n = event.target.value;
+                this.props.onScheduleChanged(this.props.schedule.withDuration(n));
+            }.bind(this);
+
+            return <input className="value-input" type="number" value={this.props.schedule.duration()} placeholder="milliseconds" onChange={handleValueChanged} />
         }
     });
-
-
-    var BooleanParameterWidget = React.createClass({
-        handleValueChange: function(event) {
-            console.log(event);
-            this.props.onValueChange(event.target.checked);
-        },
-
-        render: function() {
-            return (
-                <input type="checkbox" checked={this.props.value} onChange={this.handleValueChange} />
-            );
-        }
-    });
-
-
-    function ParameterInputRenderer(value, onValueChange) {
-        this.value = value;
-        this.onValueChange = onValueChange;
-    }
-
-    ParameterInputRenderer.prototype.visit = function(def) {
-        return def.accept(this);
-    };
-
-    ParameterInputRenderer.prototype.visitBooleanParameter = function(parameter) {
-        var factory = React.createFactory(BooleanParameterWidget);
-        return factory({
-            value: this.value,
-            onValueChange: this.onValueChange
-        });
-    };
-
-    ParameterInputRenderer.prototype.visitNumberParameter = function(parameter) {
-        var factory = React.createFactory(NumberParameterWidget);
-        return factory({
-            value: this.value,
-            onValueChange: this.onValueChange,
-            max: parameter.max()
-        });
-    };
-
-    ParameterInputRenderer.prototype.visitChoiceParameter = function(parameter) {
-        var factory = React.createFactory(ChoiceParameterWidget);
-        return factory({
-            value: this.value,
-            onValueChange: this.onValueChange,
-            choices: parameter.choices()
-        });
-    };
-
 
     var Bordered = React.createClass({
         render: function() {
@@ -100,9 +75,7 @@ define([
         }
     });
 
-
     var Panel = React.createClass({
-
         changeEffect: function(choice) {
             this.props.accessBase.updateEffectInConfig(
                 this.props.config,
@@ -202,7 +175,7 @@ define([
      * config=EffectConfiguration
      * accessBase=AccessBase
      */
-    return React.createClass({
+    var EffectConfigurationWidget = React.createClass({
         effects: function() {
             return this.props.config.effects();
         },
@@ -218,6 +191,10 @@ define([
 
         addEffect: function(effect) {
             this.props.accessBase.addEffectInConfig(this.props.config, effect);
+        },
+
+        handleScheduleChanged: function(schedule) {
+            this.props.accessBase.setScheduleForConfig(this.props.config, schedule);
         },
 
         effectChoices: function(components) {
@@ -244,15 +221,6 @@ define([
         keyFor: function(effectName) {
             validator.argument.typeString('effectName', effectName);
             return this.props.config.uid()+'-'+effectName;
-        },
-
-        renderSchedulePanel: function() {
-            return (<div>
-                <select>
-                    <option value="iterations">iterations</option>
-                    <option value="delay">delay (ms)</option>
-                </select>
-            </div>);
         },
 
         renderEffectPanel: function(effect) {
@@ -299,7 +267,7 @@ define([
                             <a href="#" onClick={this.play}><i className="fa fa-play"></i></a>
                         </div>
 
-                        {this.renderSchedulePane()}
+                        <SchedulePanel schedule={this.configuration().schedule()} onScheduleChanged={this.handleScheduleChanged} />
 
                         {this.effects().map(this.renderEffectPanel)}
                         {this.renderNewEffectPanel()}
@@ -307,5 +275,7 @@ define([
                 </Bordered>
             )
         }
-    })
+    });
+
+    return EffectConfigurationWidget;
 });

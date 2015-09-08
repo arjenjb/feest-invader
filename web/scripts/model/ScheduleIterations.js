@@ -7,7 +7,7 @@ define(function() {
 
     ScheduleIterations.new = function(n) {
         return new ScheduleIterations({
-            iteration: n
+            iterations: n||1
         })
     };
 
@@ -15,8 +15,16 @@ define(function() {
         return new ScheduleIterations(data);
     };
 
+    ScheduleIterations.prototype.type = function() {
+        return this._data.type;
+    };
+
     ScheduleIterations.prototype.iterations = function() {
         return this._data.iterations;
+    };
+
+    ScheduleIterations.prototype.withIterations = function(n) {
+        return ScheduleIterations.new(n);
     };
 
     ScheduleIterations.prototype.toJSON = function() {

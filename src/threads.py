@@ -1,5 +1,19 @@
 from threading import Lock, Condition
 import thread
+import threading
+
+
+class CountingEvent():
+    def __init__(self, event, n):
+        self._event = event
+        self._n = n
+        self._lock = threading.Lock()
+
+    def signal(self):
+        with self._lock:
+            self._n -= 1
+            if self._n == 0:
+                self._event.set()
 
 
 def RWLock(*args, **kwargs):

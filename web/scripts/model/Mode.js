@@ -16,7 +16,7 @@ define(['tools/validator'], function(validator) {
     Mode.playProgram = function(program) {
         return new Mode({
             state: 'play:program',
-            program_uid: program().uid()
+            program_uid: program.uid()
         });
     };
 

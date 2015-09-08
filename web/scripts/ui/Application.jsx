@@ -14,6 +14,14 @@ define([
           }
         }.bind(this))
 
+      this.props.accessBase.addListener('programRemoved', function() {
+        this.fetchPrograms();
+      }.bind(this));
+
+      this.props.accessBase.addListener('programAdded', function() {
+        this.fetchPrograms();
+      }.bind(this));
+
       this.props.accessBase.addListener('programsLoaded', function() {
         this.fetchPrograms();
       }.bind(this))
@@ -59,6 +67,7 @@ define([
 
     addProgram: function(program) {
       this.props.accessBase.addProgram(program);
+      this.openProgram(program);
     },
 
     closeProgram: function() {

@@ -15,7 +15,7 @@ define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'],
             uid: random.guid(),
             effects: effects,
             index: -1,
-            parameters: []
+            schedule: null
         }, accessBase);
     };
 
@@ -61,11 +61,11 @@ define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'],
         return clone;
     };
 
-    EffectConfiguration.prototype.program = function () {
+    EffectConfiguration.prototype.program = function() {
         return this.accessBase.getProgramByUid(this._program.uid());
     };
 
-    EffectConfiguration.prototype.replaceInProgramWith = function (config) {
+    EffectConfiguration.prototype.replaceInProgramWith = function(config) {
         if (!config) {
             return this.program().withoutConfiguration(this);
         } else {
@@ -129,37 +129,6 @@ define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'],
     //
     // Parameters
     //
-
-    EffectConfiguration.prototype.parameters = function () {
-        return this._data.parameters;
-    };
-
-    EffectConfiguration.prototype.getParameter = function(effect, name) {
-        return this.parameters().find(function (each) {
-            return each.effect() == effect && each.name() == name;
-        });
-    };
-
-    EffectConfiguration.prototype.getParameterValue = function(effect, name) {
-        var param = this.getParameter(effect, name);
-        return param ? param.value() : null;
-    };
-
-    EffectConfiguration.prototype.withParameters = function (parameters) {
-        var config = this.clone();
-        config._data.parameters = parameters;
-
-        return config;
-    };
-
-    EffectConfiguration.prototype.withParameter = function (effect, name, value) {
-        var parameters = this._data.parameters.filter(function (each) {
-            return ! (each.effect() == effect && each.name() == name);
-        });
-        parameters.push(ParameterValue.new(effect, name, value));
-
-        return this.withParameters(parameters);
-    };
 
     return EffectConfiguration;
 });

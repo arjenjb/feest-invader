@@ -1,3 +1,6 @@
+import logging
+
+
 class Wings:
     ALL = 63
 
@@ -57,7 +60,7 @@ class Wings:
         if on:
             self._state |= param
         else:
-            self._state ^= param
+            self._state &= (~param & 0xFF)
 
         self._wire.write(3, self._state)
 
@@ -90,10 +93,9 @@ class Contour:
         if on:
             self._state |= param
         else:
-            self._state ^= param
+            self._state &= (~param & 0xFF)
 
         self._wire.write(2, self._state)
-
 
 class Fader:
     def __init__(self, wire):

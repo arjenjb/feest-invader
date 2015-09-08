@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import os
-from model import Effect
+from model import EffectDescriptor
 
 
 class EffectLoader:
@@ -21,7 +21,7 @@ class EffectLoader:
                     module = reload(self.get_module(mod_name))
                     module.hash = self.hash_of_file((filename))
 
-            logging.info("Trying to load module %s" % mod_name)
+            logging.info(" - %s" % mod_name)
 
             _tmp = __import__('effects.repository', globals(), locals(), [mod_name])
             mod = getattr(_tmp, mod_name)
@@ -32,8 +32,6 @@ class EffectLoader:
             # Register file
             mod.hash = self.hash_of_file(filename)
             self._modules[mod_name] = mod
-
-            logging.info(" - %s"%mod_name)
 
         except Exception, e:
             del self._modules[mod_name]
