@@ -38,8 +38,9 @@ def interface_runner(accessbase):
     import RPi.GPIO as GPIO
     import time
 
-    LOG = logging.basicConfig(level=logging.DEBUG)
-
+    logging.basicConfig(level=logging.DEBUG)
+    LOG = logging.getLogger(__name__)
+    
     def trigger_next():
         accessbase.play_next()
 
