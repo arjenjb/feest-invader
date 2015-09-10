@@ -34,8 +34,11 @@ def effectbak_runner(accessbase):
 
 
 def interface_runner(accessbase):
+
     import RPi.GPIO as GPIO
     import time
+
+    LOG = logging.basicConfig(level=logging.DEBUG)
 
     def trigger_next():
         accessbase.play_next()
@@ -55,6 +58,7 @@ def interface_runner(accessbase):
         # Check next button
         if not GPIO.input(18):
             if not input_next:
+                LOG.info("Next button pressed")
                 trigger_next()
                 input_next = True
         else:
@@ -62,6 +66,7 @@ def interface_runner(accessbase):
 
         if not GPIO.input(17):
             if not input_reset:
+                LOG.info("Reset button pressed")
                 trigger_reset()
                 input_reset = True
         else:
