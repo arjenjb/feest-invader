@@ -66,4 +66,4 @@ def effect_api():
 def start(access_base):
     app.access_base = access_base
     app.debug = False
-    app.run(port=int(os.environ.get("PORT", 3000)))
+    app.run(port=int(os.environ.get("PORT", 3000)), host='0.0.0.0')
