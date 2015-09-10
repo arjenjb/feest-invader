@@ -148,7 +148,8 @@ class AccessBase(object):
 
         for i in range(0, l):
             if programs[i].uid() == playing:
-                self.set_mode(programs[(i + 1) % l])
+		logger.info("Playing next effect")
+                self.set_mode(Mode.play_program(programs[(i + 1) % l]))
                 return
 
         self.set_mode(Mode.play_program(programs[0]))
