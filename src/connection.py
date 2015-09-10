@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def pusher(data):
     logger.info("Trying to open the serial port ...")
 
-    ser = serial.Serial('COM6', 115200)
+    ser = serial.Serial('/dev/ttyACM0', 115200)
     time.sleep(2)
 
     logger.info("Resetting arduino")
