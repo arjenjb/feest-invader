@@ -6,10 +6,14 @@ from threads import CountingEvent
 
 __author__ = 'Arjen'
 
+LOG = logging.getLogger(__name__)
+
 
 def effect_runner_continuous(effect, schedule, stop, done):
     while not stop.is_set():
         effect.tick()
+
+    effect.finalize()
     done.signal()
 
     logging.info("Continuous runner done")
@@ -23,6 +27,8 @@ def effect_runner_iterations(effect, schedule, stop, done):
     while not stop.is_set() and n != 0:
         n -= 1
         effect.tick()
+
+    effect.finalize()
 
     stop.set()
     done.signal()
@@ -43,14 +49,22 @@ class Planner(object):
         self._done_counter = CountingEvent(done_event, len(effects))
         self._threads = self.create_threads(effects)
 
+        self.before_start(self._schedule)
+
         # Start the threads
         for thread in self._threads:
+            LOG.info("Starting effect: {}".format(thread.getName()))
             thread.start()
+
+    def before_start(self, schedule):
+        pass
 
     def create_threads(self, effects):
         return [
             threading.Thread(target=self.scheduler_for(index),
-                             args=(effect, self._schedule, self._stop_event, self._done_counter))
+                             args=(effect, self._schedule, self._stop_event, self._done_counter),
+                             name='effect-{}-{}'.format(index, effect.__class__.__name__)
+                             )
             for (index, effect) in enumerate(effects)]
 
     def stop(self):
@@ -77,9 +91,23 @@ class IterationPlanner(Planner):
             return effect_runner_continuous
 
 
+class DurationPlanner(Planner):
+    def before_start(self, schedule):
+
+        LOG.info('Starting duration timer for: {}ms'.format(schedule.duration()))
+        t = threading.Timer(schedule.duration() / 1000, lambda: self.stop())
+        t.start()
+
+    def scheduler_for(self, index):
+        return effect_runner_continuous
+
+
 class SchedulePlannerCreator:
     def visit(self, schedule):
         return schedule.accept(self)
+
+    def visitScheduleDuration(self, s):
+        return DurationPlanner(s)
 
     def visitScheduleIterations(self, s):
         return IterationPlanner(s)

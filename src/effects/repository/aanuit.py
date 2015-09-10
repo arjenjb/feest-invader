@@ -2,14 +2,15 @@ import logging
 import time
 
 from generators import Toggle
-from model import EffectDescriptor, BooleanParameter, NumberParameter
+from model import EffectDefinition, BooleanParameter, NumberParameter
 
 LOG = logging.getLogger('effect.AanUitEffect')
+
 
 class AanUitEffect:
     @classmethod
     def definition(cls):
-        return EffectDescriptor('aanuit', ['contour'], [
+        return EffectDefinition('aanuit', ['contour'], [
             BooleanParameter('left_eye'),
             BooleanParameter('right_eye'),
             BooleanParameter('body'),
@@ -17,7 +18,7 @@ class AanUitEffect:
             NumberParameter('duration_aan', 5000),
         ])
 
-    def __init__(self, controller, parameters):
+    def __init__(self, controller, parameters, effectenbak):
         self.controller = controller
 
         bitmask = 0
@@ -38,12 +39,15 @@ class AanUitEffect:
 
     def tick(self):
         on = self._toggler.next()
-        self.controller.contour.set_tsate(self._bitmask, on)
+        self.controller.contour.set_state(self._bitmask, on)
 
         if on:
             time.sleep(float(self._duration_aan) / 1000)
         else:
             time.sleep(float(self._duration_uit) / 1000)
+
+    def finalize(self):
+        self.controller.contour.set_state(self._bitmask, False)
 
 
 effect = AanUitEffect

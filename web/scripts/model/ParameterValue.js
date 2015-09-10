@@ -4,9 +4,8 @@ define(function() {
         this._data = data;
     };
 
-    ParameterValue.new = function(effect, name, value) {
+    ParameterValue.new = function(name, value) {
         return new ParameterValue({
-            effect: effect,
             name: name,
             value: value
         })
@@ -15,10 +14,6 @@ define(function() {
     ParameterValue.fromJSON = function(data) {
         return new ParameterValue(data);
     };
-
-    ParameterValue.prototype.effect = function () {
-        return this._data.effect;
-    }
 
     ParameterValue.prototype.name = function() {
         return this._data.name;

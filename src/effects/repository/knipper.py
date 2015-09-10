@@ -1,18 +1,18 @@
 import time
 
 from generators import SineWave, Toggle
-from model import EffectDescriptor, BooleanParameter
+from model import EffectDefinition, BooleanParameter
 
 
 class KnipperEffect:
     @classmethod
     def definition(cls):
-        return EffectDescriptor('knipper', ['contour'], [
+        return EffectDefinition('knipper', ['contour'], [
             BooleanParameter('left_eye'),
             BooleanParameter('right_eye'),
             BooleanParameter('body')])
 
-    def __init__(self, controller, parameters):
+    def __init__(self, controller, parameters, effectenbak):
         self.controller = controller
 
         bitmask = 0
@@ -34,5 +34,7 @@ class KnipperEffect:
         self.controller.contour.set_state(self._bitmask, self._toggler.next())
         time.sleep(0.001 * self._sine.next())
 
+    def finalize(self):
+        self.controller.contour.set_state(self._bitmask, False)
 
 effect = KnipperEffect

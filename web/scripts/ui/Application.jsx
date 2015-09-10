@@ -9,10 +9,12 @@ define([
     componentWillMount: function() {
         // if the current program did change
         this.props.accessBase.addListener('programChanged', function(from, to) {
+          this.fetchPrograms();
+
           if (this.state.program && this.state.program.uid() == from.uid()) {
               this.openProgram(to);
           }
-        }.bind(this))
+        }.bind(this));
 
       this.props.accessBase.addListener('programRemoved', function() {
         this.fetchPrograms();
@@ -32,7 +34,7 @@ define([
     },
 
     fetchPrograms: function() {
-      this.setState({programs: this.props.accessBase.programs()});
+      this.setState({programs: this.props.accessBase.programsSorted()});
     },
 
     getInitialState: function() {

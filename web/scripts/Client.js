@@ -1,10 +1,10 @@
 define([
     'model/Program',
-    'model/EffectDescriptor',
+    'model/EffectDefinition',
     'model/Mode',
     'tools/random',
     'tools/validator'
-], function(Program, EffectDescriptor, Mode, random, validator) {
+], function(Program, EffectDefinition, Mode, random, validator) {
 
     function Client(url) {
         this._url = url;
@@ -13,7 +13,7 @@ define([
     Client.prototype.effects = function(accessBase) {
         return $.get(this._url + '/effect').then(function (result) {
             return result.map(function(each) {
-                return EffectDescriptor.fromJSON(each, accessBase);
+                return EffectDefinition.fromJSON(each, accessBase);
             });
         });
     };

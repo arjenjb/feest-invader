@@ -9,28 +9,28 @@ define([
         'parameters': ParameterDefinition
     };
 
-	function EffectDescriptor(data) {
+	function EffectDefinition(data) {
 		this._data = data;
 	}
 
-	EffectDescriptor.new = function(name, components, parameters) {
+	EffectDefinition.new = function(name, components, parameters) {
 		validator.argument
 			.typeString('name', name)
 			.typeArray('components', components, 'string')
 			.typeArrayOrNull('parameters', parameters, ParameterDefinition);
 
-		return new EffectDescriptor({
+		return new EffectDefinition({
 			name: name,
 			components: components,
 			parameters: (parameters || [])
 		})
 	};
 
-	EffectDescriptor.fromJSON = function(object) {
-        return new EffectDescriptor(json.unmarshall(object, mapping, null))
+	EffectDefinition.fromJSON = function(object) {
+        return new EffectDefinition(json.unmarshall(object, mapping, null))
 	};
 
-	EffectDescriptor.prototype = {
+	EffectDefinition.prototype = {
 		name: function() {
 			return this._data.name;
 		},
@@ -44,5 +44,5 @@ define([
 		}
 	};
 
-	return EffectDescriptor;
+	return EffectDefinition;
 });

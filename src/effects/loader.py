@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import os
-from model import EffectDescriptor
+from model import EffectDefinition
 
 
 class EffectLoader:
@@ -34,7 +34,8 @@ class EffectLoader:
             self._modules[mod_name] = mod
 
         except Exception, e:
-            del self._modules[mod_name]
+            if mod_name in self._modules:
+                del self._modules[mod_name]
 
             logging.error("Could not load module %s"%mod_name)
             logging.exception(e)

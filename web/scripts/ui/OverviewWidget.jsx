@@ -3,8 +3,9 @@ define([
 	'model/Program',
 	'jsx!ui/component/form',
 	'jsx!ui/component/Table',
+    'jsx!ui/ComponentsWidget',
 	'jsx!ui/Controls'
-], function(React, Program, form, Table, Controls) {
+], function(React, Program, form, Table, ComponentsWidget, Controls) {
 
 	var MyForm = React.createClass({
 
@@ -37,10 +38,17 @@ define([
 	      this.props.onOpenProgram(program)
 	    },
 
+		renderNameCell(program) {
+			return <span>
+				<span className="title">{program.name()}</span>
+                <ComponentsWidget components={program.getUsedComponents()} />
+			</span>
+		},
+
 		render: function() {
 	      var columns = [{
 	          label: 'Name', 
-	          value: function(row) { return row.name() },
+	          value: this.renderNameCell.bind(this),
 	          onClick: function(row) { this.openProgram(row); }
 	        }
 	      ];
@@ -50,7 +58,13 @@ define([
 	      return (
 	        <div>
 				<Controls accessBase={this.props.accessBase} />
-				<Table className="panel" rows={this.props.programs} columns={columns} rowKey={key} onClickRow={this.openProgram} />
+				<Table
+					className="panel"
+					rows={this.props.programs}
+					columns={columns}
+					rowKey={key}
+					onClickRow={this.openProgram} />
+
 				<MyForm onSubmit={this.handleAddProgram} />
 	        </div>
 	      )

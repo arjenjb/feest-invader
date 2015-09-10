@@ -1,12 +1,13 @@
 define([
         'model/Program',
-        'model/EffectDescriptor',
+        'model/EffectDefinition',
         'model/EffectConfiguration',
+        'model/Effect',
         'model/ParameterFactory',
         'model/Mode',
         'tools/random',
         'tools/validator'
-], function(Program, EffectDescriptor, EffectConfiguration, ParameterFactory, Mode, random, validator) {
+], function(Program, EffectDescriptor, EffectConfiguration, Effect, ParameterFactory, Mode, random, validator) {
 
 	function AccessBase() {
 		this.listeners = {
@@ -99,18 +100,27 @@ define([
         });
     };
 
-	AccessBase.prototype.getEffectByName = function(name) {
+	AccessBase.prototype.getEffectDefinitionByName = function(name) {
 		var effect = this.effects().find(function(each) { return each.name() == name; });
         if (effect == null) {
-            console.warn("EffectDescriptor named '" + name + "' not found");
+            console.warn("EffectDefinition named '" + name + "' not found");
         }
 
         return effect;
 	};
 
-	AccessBase.prototype.programs = function(){
-		return this._programs;
-	};
+    AccessBase.prototype.programs = function(){
+        return this._programs;
+    };
+
+    AccessBase.prototype.programsSorted = function(){
+        return Array.prototype.slice.call(this.programs())
+            .sort(function(a, b) {
+                return ((a.name() < b.name()) ? -1 : ((a.name() > b.name()) ? 1 : 0));
+            });
+    };
+
+
 
     AccessBase.prototype.getProgramByUid = function(uid) {
         var program = this.programs().find(function(each) { return each.uid() == uid; });
@@ -144,19 +154,53 @@ define([
 		this.notifyListeners('programChanged', from, to);
 	};
 
-    // Configurations
-    AccessBase.prototype.updateParameterInConfig = function(config, effectName, parameterName, parameterValue) {
-        validator.argument
-            .objectType('config', config, EffectConfiguration)
-            .typeString('effectName', effectName)
-            .typeString('parameterName', parameterName);
+    AccessBase.prototype.programWithAllReferers = function(base) {
+        var refs = [];
+        var todo = [base];
+        var self = this;
 
-        var newConfig = config.withParameter(effectName, parameterName, parameterValue);
-        var newProgram = config.replaceInProgramWith(newConfig);
+        while (todo.length) {
+            var target = todo.shift();
+            refs.push(target);
 
-        this.updateProgram(newProgram, newProgram);
+            this
+                .programs()
+                .filter(function(program) {
+                    return program
+                        .configurations()
+                        .find(function(configuration) {
+                                return configuration
+                                    .effects()
+                                    .find(function(effect) {
+                                        var definition = self.getEffectDefinitionByName(effect.name());
+                                        return definition && definition
+                                            .parameters()
+                                            // Find program parameters
+                                            .filter(function(param) {
+                                                return param.type() == 'program';
+                                            })
+                                            // Get the parameter value from the effect
+                                            .map(function(param) {
+                                                return effect.getParameterValue(param.name())
+                                            })
+                                            // Filter out all null values
+                                            .find(function(program_uid) {
+                                                return program_uid == program.uid();
+                                            }) != null;
+                                    }) != null;
+                        }) != null;
+                })
+                .filter(function(program) {
+                   return (! (refs.find(function(o) { return o.uid() == program.uid(); })
+                            || todo.find(function(o) { return o.uid() == program.uid(); })));
+                })
+                .forEach(Array.prototype.push, todo);
+        }
+
+        return refs;
     };
 
+    // Configurations
     AccessBase.prototype.setScheduleForConfig = function(config, schedule) {
         validator.argument
             .objectType('config', config, EffectConfiguration)
@@ -167,14 +211,14 @@ define([
         this.updateProgram(newProgram, newProgram);
     };
 
-    AccessBase.prototype.updateEffectInConfig = function(config, oldEffectName, newEffectName) {
+    AccessBase.prototype.updateEffectInConfig = function(config, oldEffect, newEffect) {
         validator.argument
-            .typeString('oldEffectName', oldEffectName)
-            .typeStringOrNull('newEffectName', newEffectName);
+            .objectType('oldEffect', oldEffect, Effect)
+            .objectTypeOrNull('newEffect', newEffect, Effect);
 
-        var newConfig = (! newEffectName)
-            ? config.withoutEffect(oldEffectName)
-            : config.replaceEffect(oldEffectName, newEffectName);
+        var newConfig = (! newEffect)
+            ? config.withoutEffect(oldEffect)
+            : config.replaceEffect(oldEffect, newEffect);
 
         var newProgram = (newConfig.effects().length == 0)
             ? config.replaceInProgramWith(null)
@@ -183,8 +227,11 @@ define([
         this.updateProgram(newProgram, newProgram);
     };
 
-    AccessBase.prototype.addEffectInConfig = function(config, effectName) {
-        var newConfig = config.withEffect(effectName);
+    AccessBase.prototype.addEffectInConfig = function(config, effect) {
+        validator.argument
+            .objectType('effect', effect, Effect);
+
+        var newConfig = config.withEffect(effect);
         var newProgram = config.replaceInProgramWith(newConfig);
 
         this.updateProgram(newProgram, newProgram);

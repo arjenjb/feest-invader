@@ -1,12 +1,14 @@
 define([
 	'react',
 	'model/EffectConfiguration',
+	'model/Effect',
 	'model/Mode',
 	'jsx!ui/component/form',
 	'jsx!ui/program/ProgramConfigurationWidget',
+	'jsx!ui/ComponentsWidget',
 	'jsx!ui/Controls'
 
-], function(React, EffectConfiguration, Mode, form, ProgramConfigurationWidget, Controls) {
+], function(React, EffectConfiguration, Effect, Mode, form, ProgramConfigurationWidget, ComponentsWidget, Controls) {
 
     var EditableLabel = React.createClass({
         getInitialState: function() {
@@ -100,7 +102,7 @@ define([
 			var program = this.props.program;
 			var accessBase = this.props.accessBase;
 
-			var config = EffectConfiguration.effects([name], accessBase);
+			var config = EffectConfiguration.effects([Effect.new(name)], accessBase);
 			var newProgram = program.withConfiguration(config);
 
 			accessBase.updateProgram(program, newProgram);
@@ -108,8 +110,18 @@ define([
 
 		renderConfiguration: function(config) {
 			return (
-				<ProgramConfigurationWidget key={config.index()} config={config} accessBase={this.props.accessBase} />
+				<ProgramConfigurationWidget
+                    key={config.index()}
+                    config={config}
+                    program={this.props.program}
+                    accessBase={this.props.accessBase} />
 			)
+		},
+
+		handleSequenceChanged: function(schedule) {
+			var program = this.props.program;
+			this.props.accessBase
+				.updateProgram(program, program.withSchedule(schedule));
 		},
 
         handleTitleChange: function(title) {
@@ -130,11 +142,27 @@ define([
 				<div>
 					<Controls accessBase={this.props.accessBase} onPlay={this.handleOnPlay} />
 
+                    <p>
+                        <a href="#" onClick={this.handleClose}>Back</a> | <a href="#" onClick={this.handleDelete}>Delete</a>
+                    </p>
+
                     <h2><EditableLabel value={this.props.program.name()} emptyLabel="No title given" onChange={this.handleTitleChange} /></h2>
 
-					<p>
-						<a href="#" onClick={this.handleClose}>Back</a> | <a href="#" onClick={this.handleDelete}>Delete</a>
-					</p>
+                    <p className="toolbar">
+                        <span className="label">Components</span>
+                        <span className="value"><ComponentsWidget components={this.props.program.getUsedComponents()} /></span>
+
+                        <span className="label">Schedule</span>
+                        <span className="value">
+							<form.DropDown
+								options={[
+									{ value: 'sequence', label: 'sequence' },
+									{ value: 'random', label: 'random'}]}
+
+     							onSelect={this.handleSequenceChanged}
+								selected={this.props.program.schedule()} />
+                        </span>
+                    </p>
 
 					{this.props.program.configurationsSorted().map(function(configuration) {
 						return this.renderConfiguration(configuration)

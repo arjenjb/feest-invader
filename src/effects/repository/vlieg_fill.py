@@ -3,24 +3,27 @@ import logging
 import time
 
 from generators import SineWave, Toggle, Range
-from model import EffectDefinition, BooleanParameter
+from model import EffectDefinition, BooleanParameter, NumberParameter
 
 logging.basicConfig(level=DEBUG)
 
-class VliegEffect:
+class VliegFillEffect:
     @classmethod
     def definition(cls):
-        return EffectDefinition('vlieg', ['wings'], [
+        return EffectDefinition('vlieg_fill', ['wings'], [
             BooleanParameter('left'),
-            BooleanParameter('right')])
+            BooleanParameter('right'),
+            NumberParameter('duration', 10000),
+        ])
 
     def __init__(self, controller, parameters, effectenbak):
 
         self.controller = controller
         self._left = parameters.get('left')
         self._right = parameters.get('right')
+        self._duration = parameters.get('duration')
 
-        self._generator = Range(lower=0, upper=3)
+        self._generator = Range(lower=0, upper=4)
 
     def ticks_per_iteration(self):
         return self._generator.ticks()
@@ -29,12 +32,14 @@ class VliegEffect:
         i = self._generator.next()
 
         if self._left:
-            self.controller.wings.left(False)
-            self.controller.wings.left_index(i, True)
+            self.controller.wings.left_a(i >= 1)
+            self.controller.wings.left_b(i >= 2)
+            self.controller.wings.left_c(i >= 3)
 
         if self._right:
-            self.controller.wings.right(False)
-            self.controller.wings.right_index(i, True)
+            self.controller.wings.right_a(i >= 1)
+            self.controller.wings.right_b(i >= 2)
+            self.controller.wings.right_c(i >= 3)
 
         time.sleep(.2)
 
@@ -45,4 +50,4 @@ class VliegEffect:
             self.controller.wings.right(False)
 
 
-effect = VliegEffect
+effect = VliegFillEffect

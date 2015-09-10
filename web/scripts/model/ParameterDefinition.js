@@ -24,6 +24,10 @@ define(['require'], function(require) {
         return this._data.name;
     };
 
+    ParameterDefinition.prototype.type = function() {
+        return this._data.type;
+    };
+
     ParameterDefinition.prototype.accept = function(visitor) {
         var method = 'visit'+this.constructor.name;
         console.assert(method in visitor, 'Method ' + method + '() not defined on visitor ' + visitor.constructor.name);

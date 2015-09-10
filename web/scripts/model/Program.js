@@ -1,7 +1,11 @@
-define(['tools/random', 'tools/json', 'model/EffectConfiguration'], function(random, json, EffectConfiguration) {
+define([
+    'tools/random',
+    'tools/json',
+    'tools/collections',
+    'model/EffectConfiguration'
+], function(random, json, collections, EffectConfiguration) {
 
-    var mapping = {'configurations': EffectConfiguration}
-
+    var mapping = {'configurations': EffectConfiguration};
 
 	function Program(data, accessBase) {
 		this._data = data;
@@ -16,7 +20,8 @@ define(['tools/random', 'tools/json', 'model/EffectConfiguration'], function(ran
 		return new Program({
 			uid: random.guid(),
 			name: name,
-			configurations: []
+			configurations: [],
+            schedule: 'sequence'
 		}, accessBase)
 	};
 
@@ -34,7 +39,11 @@ define(['tools/random', 'tools/json', 'model/EffectConfiguration'], function(ran
 			return this._data.uid;
 		},
 
-		name: function() {
+        schedule: function() {
+            return this._data.schedule;
+        },
+
+        name: function() {
 			return this._data.name;
 		},
 
@@ -78,7 +87,10 @@ define(['tools/random', 'tools/json', 'model/EffectConfiguration'], function(ran
                 config._data.index = index + 1;
 
             } else {
-                console.assert(this.configurations().every(function(each) { return each.index() != config.index(); }), "A configuration with the given index already exists");
+                console.assert(
+                    this.configurations().every(function(each) { return each.index() != config.index(); }),
+                    "A configuration with the given index already exists"
+                );
             }
 
 			var obj = this.clone();
@@ -87,6 +99,21 @@ define(['tools/random', 'tools/json', 'model/EffectConfiguration'], function(ran
 
 			return obj;
 		},
+
+        withSchedule: function(schedule) {
+            var clone = this.clone();
+            clone._data.schedule = schedule;
+
+            return clone;
+        },
+
+        getUsedComponents: function () {
+            var list = this.configurations().reduce(function (prev, element) {
+                return prev.concat(element.getUsedComponents());
+            }, []);
+
+            return collections.unique(list)
+        },
 
         toJSON: function() {
             return json.marshall(this._data, mapping);

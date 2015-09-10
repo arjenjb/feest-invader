@@ -7,6 +7,7 @@ from serial import SerialException
 from components import Controller
 import connection
 from effects import EffectenBak
+from generators import Range
 import http
 from model import AccessBaseManager, Mode
 
@@ -14,8 +15,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def effectbak_runner(accessbase):
-    #conn = connection.ArduinoConnection()
-    conn = connection.MockConnection()
+    conn = connection.ArduinoConnection()
+    #conn = connection.MockConnection()
 
     try:
         conn.open()
@@ -44,7 +45,7 @@ if __name__ == '__main__':
     access_base.change_watcher()
 
     logging.info("Starting effectenbak thread")
-    effectenbak = threading.Thread(target=effectbak_runner, args=(effect_accessor, ))
+    effectenbak = threading.Thread(target=effectbak_runner, args=(effect_accessor, ), name='effectenbak')
     effectenbak.start()
 
     logging.info("Starting http server")

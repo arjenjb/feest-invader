@@ -177,7 +177,7 @@ class AccessBaseManager(object):
         notify_thread.start()
 
 
-class EffectDescriptor(object):
+class EffectDefinition(object):
     def __init__(self, name, components, parameters):
         self._name = name
         self._components = components
@@ -200,24 +200,24 @@ class EffectDescriptor(object):
 
 
 class Effect(object):
-    def __init__(self, uid, effect_name, index, parameters):
+    def __init__(self, uid, name, index, parameters):
         self._uid = uid
         self._index = index
-        self._effect_name = effect_name
+        self._name = name
         self._parameters = parameters
 
     @classmethod
     def from_json(cls, object):
-        return EffectConfiguration(
+        return Effect(
             object['uid'],
+            object['name'],
             object['index'],
-            object['effect_name'],
             map(ParameterValue.from_json, object['parameters']))
 
     def to_json(self):
         return {
             'uid': self.uid(),
-            'effect_name': self.effect_name(),
+            'name': self.name(),
             'index': self.index(),
             'parameters': map(ParameterValue.to_json, self.parameters())
         }
@@ -228,8 +228,8 @@ class Effect(object):
     def parameters(self):
         return self._parameters
 
-    def effect_name(self):
-        return self._effect_name
+    def name(self):
+        return self._name
 
     def index(self):
         return self._index
@@ -258,6 +258,10 @@ class ChoiceParameter(ParameterDefinition):
     def __init__(self, name, choices):
         ParameterDefinition.__init__(self, name, 'choice', {'choices': choices})
 
+
+class ProgramParameter(ParameterDefinition):
+    def __init__(self, name):
+        ParameterDefinition.__init__(self, name, 'program', {})
 
 class NumberParameter(ParameterDefinition):
     def __init__(self, name, max, min=0):
@@ -310,7 +314,7 @@ class ScheduleIterations(AbstractSchedule):
         return 'iterations'
 
 
-class ScheduleDuration(object):
+class ScheduleDuration(AbstractSchedule):
     def __init__(self, duration):
         self._duration = duration
 
@@ -323,15 +327,13 @@ class ScheduleDuration(object):
     def type(self):
         return 'duration'
 
+    def duration(self):
+        return int(self._duration)
 
 class ParameterValue(object):
-    def __init__(self, effect, name, value):
-        self._effect = effect
+    def __init__(self, name, value):
         self._name = name
         self._value = value
-
-    def effect(self):
-        return self._effect
 
     def name(self):
         return self._name
@@ -341,14 +343,10 @@ class ParameterValue(object):
 
     @classmethod
     def from_json(cls, obj):
-        return ParameterValue(
-            obj['effect'],
-            obj['name'],
-            obj['value'])
+        return ParameterValue(obj['name'], obj['value'])
 
     def to_json(self):
         return {
-            'effect': self._effect,
             'name': self._name,
             'value': self._value,
         }
@@ -376,7 +374,7 @@ class EffectConfiguration(object):
         return {
             'uid': self._uid,
             'index': self._index,
-            'effects': self._effects,
+            'effects': map(Effect.to_json, self._effects),
             'schedule': self._schedule.to_json()
         }
 
@@ -388,10 +386,11 @@ class EffectConfiguration(object):
 
 
 class Program(object):
-    def __init__(self, uid, name, configurations):
+    def __init__(self, uid, name, configurations, schedule):
         self._configurations = configurations
         self._name = name
         self._uid = uid
+        self._schedule = schedule
 
     def uid(self):
         return self._uid
@@ -399,15 +398,22 @@ class Program(object):
     def configurations(self):
         return self._configurations
 
+    def schedule(self):
+        return self._schedule
+
+    def is_random(self):
+        return self._schedule == 'random'
+
     def get_configuration(self, uid):
         return next((c for c in self._configurations if c.uid() == uid), None)
 
     @classmethod
     def from_json(cls, object):
         return Program(
-            object['uid'],
-            object['name'],
-            map(EffectConfiguration.from_json, object['configurations'])
+            object.get('uid'),
+            object.get('name'),
+            map(EffectConfiguration.from_json, object.get('configurations', [])),
+            object.get('schedule', 'sequence')
         )
 
     def to_json(self):
@@ -415,6 +421,7 @@ class Program(object):
             'uid': self._uid,
             'name': self._name,
             'configurations': map(EffectConfiguration.to_json, self._configurations),
+            'schedule': self._schedule
         }
 
 

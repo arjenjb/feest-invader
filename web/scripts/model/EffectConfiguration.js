@@ -1,7 +1,15 @@
-define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'], function (random, json, ParameterValue, Schedule) {
+define([
+    'tools/random',
+    'tools/json',
+    'tools/validator',
+    'tools/collections',
+    'model/Effect',
+    'model/Schedule',
+    'model/Components'
+], function (random, json, validator, collections, Effect, Schedule, Components) {
 
     var mapping = {
-        'parameters': ParameterValue,
+        'effects': Effect,
         'schedule': Schedule
     };
 
@@ -50,22 +58,22 @@ define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'],
         return this._data.index;
     };
 
-    EffectConfiguration.prototype.schedule = function() {
+    EffectConfiguration.prototype.schedule = function () {
         return this._data.schedule;
     };
 
-    EffectConfiguration.prototype.withSchedule = function(schedule) {
+    EffectConfiguration.prototype.withSchedule = function (schedule) {
         var clone = this.clone();
         clone._data.schedule = schedule;
 
         return clone;
     };
 
-    EffectConfiguration.prototype.program = function() {
+    EffectConfiguration.prototype.program = function () {
         return this.accessBase.getProgramByUid(this._program.uid());
     };
 
-    EffectConfiguration.prototype.replaceInProgramWith = function(config) {
+    EffectConfiguration.prototype.replaceInProgramWith = function (config) {
         if (!config) {
             return this.program().withoutConfiguration(this);
         } else {
@@ -78,26 +86,47 @@ define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'],
     //
 
     EffectConfiguration.prototype.effects = function () {
-        return this._data.effects
-            .map(function (each) { return this.getEffectByName(each) }.bind(this.accessBase))
-            .filter(function (each) { return each != null });
-    };
-
-    EffectConfiguration.prototype.effectNames = function () {
         return this._data.effects;
     };
 
-    EffectConfiguration.prototype.withEffect = function (effectName) {
+
+    EffectConfiguration.prototype.effectsSorted = function () {
+        return Array.prototype.slice.call(this.effects())
+            .sort(function(a, b) {
+                return a.index() - b.index();
+            });
+    };
+
+    EffectConfiguration.prototype.effectDefinitions = function () {
+        return this._data.effects
+            .filter(function(each) { return each.name() != ''; })
+            .map(function(each) {
+                return this.accessBase.getEffectDefinitionByName(each.name());
+            }.bind(this));
+    };
+
+    EffectConfiguration.prototype.withEffect = function (effect) {
+        validator.argument
+            .objectType('effect', effect, Effect);
+
+        if (effect.index() < 0) {
+            var index = this.effects().reduce(function (previous, element) {
+                return Math.max(previous, element.index());
+            }, 0);
+
+            effect._data.index = index + 1;
+        }
+
         var obj = this.clone();
-        obj._data.effects.push(effectName);
+        obj._data.effects.push(effect);
 
         return obj;
     };
 
-    EffectConfiguration.prototype.withoutEffect = function (effectName) {
+    EffectConfiguration.prototype.withoutEffect = function (effect) {
         var obj = this.clone();
         obj._data.effects = obj._data.effects.filter(function (each) {
-            return each != effectName;
+            return each.uid() != effect.uid();
         });
 
         return obj;
@@ -108,27 +137,26 @@ define(['tools/random', 'tools/json', 'model/ParameterValue', 'model/Schedule'],
     };
 
     //
-    // Componetns
+    // Components
     //
 
-    EffectConfiguration.prototype.getUsedCompontents = function () {
-        return this.effects().reduce(function (prev, element) {
-            return prev.concat(element.components());
+    EffectConfiguration.prototype.getUsedComponents = function () {
+        var accessBase = this.accessBase;
+        var list = this.effects().reduce(function (prev, element) {
+            return prev.concat(element.getUsedComponents(accessBase));
         }, []);
+
+        return collections.unique(list)
     };
 
     EffectConfiguration.prototype.getUnusedComponents = function () {
-        var used = this.getUsedCompontents();
-        var unused = ['wings', 'contour', 'fader'];
+        var used = this.getUsedComponents();
+        var unused = Components.all();
 
         return unused.filter(function (each) {
             return used.indexOf(each) == -1
         });
     };
-
-    //
-    // Parameters
-    //
 
     return EffectConfiguration;
 });

@@ -17,6 +17,11 @@ define([], function() {
         return this;
     };
 
+    BaseValidator.prototype.objectTypeOrNull = function(name, value, type) {
+        if (value === null) return this;
+        return this.objectType(name, value, type);
+    };
+
     BaseValidator.prototype.typeStringOrNull = function(name, value) {
         if (value === null) return this;
         return this.typeString(name, value);

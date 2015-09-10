@@ -1,5 +1,21 @@
 define(['react'], function(React) {
 
+    var ProgramParameterWidget = React.createClass({
+        handleValueChange: function(event) {
+            this.props.onValueChange(event.target.value);
+        },
+
+        render: function() {
+            return (
+                <select value={this.props.value} onChange={this.handleValueChange}>
+                    {this.props.choices.map(function(each) {
+                        return <option value={each.value}>{each.label}</option>
+                    })}
+                </select>
+            );
+        }
+    });
+
     var ChoiceParameterWidget = React.createClass({
         handleValueChange: function(event) {
             this.props.onValueChange(event.target.value);
@@ -50,13 +66,41 @@ define(['react'], function(React) {
     });
 
 
-    function ParameterInputRenderer(value, onValueChange) {
+    function ParameterInputRenderer(value, onValueChange, accessBase, program) {
         this.value = value;
         this.onValueChange = onValueChange;
+
+        // context
+        this.accessBase = accessBase;
+        this.program = program;
     }
 
     ParameterInputRenderer.prototype.visit = function(def) {
         return def.accept(this);
+    };
+
+    ParameterInputRenderer.prototype.visitProgramParameter = function(parameter) {
+        var factory = React.createFactory(ProgramParameterWidget);
+
+        var refs = this.accessBase
+            .programWithAllReferers(this.program)
+            .map(function(each) {return each.uid()});
+
+        var choices = this.accessBase
+            .programs()
+            .filter(function(each) { return refs.indexOf(each.uid()) == -1; })
+            .map(function(each) {
+                return {
+                    value: each.uid(),
+                    label: each.name() + ' (' + each.getUsedComponents().join(', ') + ')'
+                }
+        });
+
+        return factory({
+            value: this.value,
+            onValueChange: this.onValueChange,
+            choices: choices
+        });
     };
 
     ParameterInputRenderer.prototype.visitBooleanParameter = function(parameter) {

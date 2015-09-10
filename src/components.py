@@ -57,12 +57,16 @@ class Wings:
         self.set_state(1 << i, on)
 
     def set_state(self, param, on):
-        if on:
-            self._state |= param
-        else:
-            self._state &= (~param & 0xFF)
+        state = self._state
 
-        self._wire.write(3, self._state)
+        if on:
+            state = self._state | param
+        else:
+            state = self._state & (~param & 0xFF)
+
+        if state != self._state:
+            self._state = state
+            self._wire.write(3, state)
 
 
 class Contour:

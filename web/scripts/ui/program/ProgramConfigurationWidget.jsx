@@ -3,10 +3,13 @@ define([
     'tools/validator',
     'ui/component/form',
     'jsx!./ParameterInputRenderer',
+    'jsx!ui/ComponentsWidget',
     'model/ParameterValue',
+    'model/Effect',
     'model/Mode',
-    'model/Schedule'
-    ], function(React, validator, form, ParameterInputRenderer, ParameterValue, Mode, Schedule) {
+    'model/Schedule',
+    'model/Components'
+    ], function(React, validator, form, ParameterInputRenderer, ComponentsWidget, ParameterValue, Effect, Mode, Schedule, Components) {
 
 
     var SchedulePanel = React.createClass({
@@ -20,8 +23,9 @@ define([
         },
 
         render: function() {
-
-            var type = this.props.schedule ? this.props.schedule.type() : null;
+            var type = this.props.schedule
+                ? this.props.schedule.type()
+                : null;
 
             return <div className="schedule-pane">
                 {this.renderValue()}
@@ -75,12 +79,17 @@ define([
         }
     });
 
+    /**
+     * Props
+     */
     var Panel = React.createClass({
         changeEffect: function(choice) {
+            var effect = choice ? Effect.new(choice) : null;
+
             this.props.accessBase.updateEffectInConfig(
                 this.props.config,
-                this.props.effect.name(),
-                choice);
+                this.props.effect,
+                effect);
         },
 
         removeEffect: function(event) {
@@ -88,26 +97,34 @@ define([
 
             this.props.accessBase.updateEffectInConfig(
                 this.props.config,
-                this.props.effect.name(),
+                this.props.effect,
                 null);
         },
 
-        parameterValueChanged: function(effectName, parameterName, parameterValue) {
-            this.props.accessBase.updateParameterInConfig(
+        parameterValueChanged: function(parameterName, parameterValue) {
+            this.props.accessBase.updateEffectInConfig(
                 this.props.config,
-                effectName,
-                parameterName,
-                parameterValue);
+                this.props.effect,
+                this.props.effect.updateParameter(ParameterValue.new(parameterName, parameterValue)));
         },
 
         renderParameterInput: function(def, value) {
-            return (new ParameterInputRenderer(value, function(value) {
-                this.parameterValueChanged(this.props.effect.name(), def.name(), value);
-            }.bind(this))).visit(def);
+            var onValueChange = function(value) {
+                this.parameterValueChanged(def.name(), value);
+            }.bind(this);
+
+            var visitor = new ParameterInputRenderer(
+                value,
+                onValueChange,
+                this.props.accessBase,
+                this.props.program);
+
+            return visitor.visit(def);
         },
 
         renderParameters: function() {
-            if (this.props.parameters.length == 0) {
+            var parameters = this.props.definition.parameters();
+            if (parameters.length == 0) {
                 return null;
             }
 
@@ -120,14 +137,11 @@ define([
                     </tr>
                     </thead>
                     <tbody>
-                    {this.props.parameters.map(function(pair) {
-                        var def = pair[0];
-                        var value = pair[1];
-
+                    {parameters.map(function(def) {
                         return (
                             <tr>
                                 <td>{def.name()}</td>
-                                <td>{this.renderParameterInput(def, value)}</td>
+                                <td>{this.renderParameterInput(def, this.props.effect.getParameterValue(def.name()))}</td>
                             </tr>
                         );
                     }.bind(this))}
@@ -138,17 +152,8 @@ define([
 
         render: function() {
             var classNames = ['box-panel'];
-            var l = this.props.effect.components().length;
-            classNames.push('box-' + l);
 
-            var components = this.props.config.getUnusedComponents().concat(this.props.effect.components());
-            var effects = this.props.accessBase.effects().filter(function(effect) {
-                return effect.components().every(function(each) {
-                    return components.indexOf(each) !== -1;
-                })
-            });
-
-            var options = effects.map(function(each) {
+            var options = this.props.accessBase.effects().map(function(each) {
                 return {
                     value: each.name(),
                     label: each.name()
@@ -159,10 +164,9 @@ define([
                 <Bordered className={classNames.join(' ')}>
                     <div>
                         <a href="#" onClick={this.removeEffect} className="button-remove"><i className="fa fa-trash"></i></a>
-                        <form.DropDown options={options} selected={this.props.effect.name()} onSelect={this.changeEffect} />
-                        <div className="components">
-                            <small>{this.props.effect.components().join(', ')}</small>
-                        </div>
+                        <form.DropDown options={options} selected={this.props.definition.name()} onSelect={this.changeEffect} />
+                        &nbsp;
+                        <small><ComponentsWidget components={this.props.effect.getUsedComponents(this.props.accessBase)} /></small>
 
                         {this.renderParameters()}
                     </div>
@@ -190,20 +194,15 @@ define([
         },
 
         addEffect: function(effect) {
-            this.props.accessBase.addEffectInConfig(this.props.config, effect);
+            this.props.accessBase.addEffectInConfig(this.props.config, Effect.new(effect));
         },
 
         handleScheduleChanged: function(schedule) {
             this.props.accessBase.setScheduleForConfig(this.props.config, schedule);
         },
 
-        effectChoices: function(components) {
-            var effects = this.props.accessBase.effects().filter(function(effect) {
-                return effect.components().every(function(each) {
-                    return components.indexOf(each) !== -1;
-                })
-            });
-
+        effectChoices: function() {
+            var effects = this.props.accessBase.effects();
             var options = effects.map(function(effect) {
                 return {
                     value: effect.name(),
@@ -212,7 +211,7 @@ define([
             });
 
             var appendOptions = [
-                {value: '__random__', label: '[random effect]'}
+//                 {value: '__random__', label: '[random effect]'}
             ];
 
             return [].concat(options, appendOptions);
@@ -224,39 +223,26 @@ define([
         },
 
         renderEffectPanel: function(effect) {
-            var parameters = effect.parameters().map(function(definition) {
-                var parameterName = definition.name();
-
-                var value = this.configuration().getParameterValue(effect.name(), parameterName)
-                    || null;
-
-                return [definition, value];
-            }.bind(this));
+            var definition = this.props.accessBase.getEffectDefinitionByName(effect.name());
 
             return <Panel
-                key={this.keyFor(effect.name())}
+                key={effect.uid()}
                 effect={effect}
-                parameters={parameters}
+                definition={definition}
+                program={this.props.program}
                 config={this.props.config}
                 accessBase={this.props.accessBase} />
         },
 
         renderNewEffectPanel: function() {
-            var components = this.props.config.getUnusedComponents();
-
-            if (components.length == 0) {
-                return <span />;
-
-            } else {
-                var options = this.effectChoices(components);
-                return (
-                    <Bordered key={this.keyFor('none')} className="box-panel box-1" key="none">
-                        <div>
-                            <form.DropDown noneLabel="none" options={options} onSelect={this.addEffect} selected='' />
-                        </div>
-                    </Bordered>
-                );
-            }
+            var options = this.effectChoices();
+            return (
+                <Bordered key={this.keyFor('none')} className="box-panel box-new" key="none">
+                    <div>
+                        <form.DropDown noneLabel="none" options={options} onSelect={this.addEffect} selected='' />
+                    </div>
+                </Bordered>
+            );
         },
 
         render: function() {

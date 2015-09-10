@@ -1,4 +1,5 @@
 import logging
+import threading
 import serial
 import time
 from multiprocessing import Array, Process
@@ -8,7 +9,6 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def pusher(data):
-    last = [0] * 4
     logger.info("Trying to open the serial port ...")
 
     ser = serial.Serial('COM6', 115200)
@@ -21,14 +21,9 @@ def pusher(data):
     logger.info("Starting pusher loop")
 
     while True:
-        if last == data[:]:
-            continue
-
         # Writing data
         for i in range(4):
-            if last[i] != data[i]:
-                ser.write(struct.pack('2B', i + 1, data[i]))
-                last[i] = data[i]
+            ser.write(struct.pack('2B', i + 1, data[i]))
 
 
 class ArduinoConnection():
@@ -39,7 +34,7 @@ class ArduinoConnection():
         self._shared_memory[index] = value
 
     def open(self):
-        self._process = Process(target=pusher, args=(self._shared_memory,))
+        self._process = Process(target=pusher, args=(self._shared_memory, ))
         self._process.start()
 
 

@@ -1,35 +1,44 @@
 import logging
+from random import shuffle
 import threading
 
 import planner
-
 from .loader import EffectLoader
 from model import Mode
 
-logging = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class ConfigurationPlayer:
-    def __init__(self, configuration, effectenbak):
+    def __init__(self, configuration, effectenbak, done_signal):
+
+        self._done_signal = done_signal
         self._configuration = configuration
         self._effectenbak = effectenbak
 
-        modules = [effectenbak.get_effect_module(effect_name) for effect_name in configuration.effects()]
+        def construct_effect(effect):
+            effect_class = effectenbak.get_effect_module(effect.name()).effect
+            params = dict(((param.name(), param.value()) for param in effect.parameters()))
+            return effect_class(effectenbak.controller(), params, effectenbak)
 
-        effects = []
-        for effect_class in [module.effect for module in modules if module is not None]:
-            params = dict((param.name(), param.value()) for param in
-                          configuration.effect_parameters(effect_class.definition().name()))
-            effects.append(effect_class(effectenbak.controller(), params))
+        effects = [construct_effect(effect) for effect in configuration.effects()]
 
         self._effects = effects
         self._planner = planner.for_configuration(configuration)
 
     def start(self):
-        logging.info("Playing configuration %s" % self._configuration.uid())
-        logging.info("Found {} effects in this configuration".format(str(len(self._effects))))
+        LOG.info("Playing configuration %s" % self._configuration.uid())
+        LOG.info("Found {} effects in this configuration".format(str(len(self._effects))))
 
-        self._planner.execute(self._effects, self._effectenbak.done_signal())
+        if len(self._effects) == 0:
+            LOG.info("Not playing")
+            self.done_signal().set()
+            return
+
+        self._planner.execute(self._effects, self.done_signal())
+
+    def done_signal(self):
+        return self._done_signal
 
     def play_next(self):
         return False
@@ -37,26 +46,29 @@ class ConfigurationPlayer:
     def stop(self):
         self._planner.stop()
 
-
-class RandomPlan:
-    pass
-
-
-class SequencePlan:
-    pass
-
-
 class ProgramPlayer:
-    def __init__(self, program, effectenbak):
-        self._plan = SequencePlan()
+    def __init__(self, program, effectenbak, done_signal, continuous=True):
+
+        self._done_signal = done_signal
         self._program = program
         self._effectenbak = effectenbak
+        self._continuous = continuous
 
         self._current = None
-        self._players = [ConfigurationPlayer(configuration, effectenbak) for configuration in program.configurations()]
+        self._players = []
+
+    def reset(self):
+        self._i = -1
+        self._current = None
+        self._players = [ConfigurationPlayer(configuration, self._effectenbak, self._done_signal) for configuration in
+                         self._program.configurations()]
+
+        if self._program.is_random():
+            LOG.info("Shuffling configurations")
+            shuffle(self._players)
 
     def start(self):
-        self._i = -1
+        self.reset()
         self.play_next()
 
     def play_next(self):
@@ -67,11 +79,19 @@ class ProgramPlayer:
         self._i += 1
 
         if self._i == len(self._players):
-            return False
+            if not self._continuous:
+                LOG.info("Reached end of program, done")
+                return False
 
-        logging.info("Playing configuration {}".format(self._i))
+            LOG.info("Reached end of program, restarting")
+            self.reset()
+            self._i = 0
+
+        LOG.info("Playing configuration {}".format(self._i))
         self._current = self._players[self._i]
         self._current.start()
+
+        return True
 
     def stop(self):
         if self._current is not None:
@@ -90,6 +110,9 @@ class EffectenBak:
         self._player = None
         self._done_event = threading.Event()
 
+    def access_base(self):
+        return self._access_base
+
     def get_effect_module(self, name):
         return self._loader.get_module(name)
 
@@ -102,7 +125,7 @@ class EffectenBak:
     def play_program(self, program):
         self.stop()
 
-        self._player = ProgramPlayer(program, self)
+        self._player = ProgramPlayer(program, self, self._done_event)
         self._player.start()
 
     def play_configuration(self, configuration):
@@ -111,14 +134,14 @@ class EffectenBak:
         if configuration.schedule() is None:
             return
 
-        self._player = ConfigurationPlayer(configuration, self)
+        self._player = ConfigurationPlayer(configuration, self, self._done_event)
         self._player.start()
 
     def stop(self):
         if self._player is not None:
-            logging.info("Stopping ... ")
+            LOG.info("Stopping ... ")
             self._player.stop()
-            logging.info("Stopped")
+            LOG.info("Stopped")
 
         self._player = None
 
@@ -129,30 +152,31 @@ class EffectenBak:
             self.stop()
 
         elif mode.is_play_program():
-            logging.info("Playing program")
+            LOG.info("Playing program")
             self.play_program(mode.get_program_in(self._access_base))
 
         elif mode.is_play_configuration():
-            logging.info("Playing configuration")
+            LOG.info("Playing configuration")
             self.play_configuration(mode.get_configuration_in(self._access_base))
 
     def run(self):
         access_base = self._access_base
-        logging.info("Watching changes in accessbase")
+        LOG.setLevel(logging.DEBUG)
+        LOG.info("Watching changes in accessbase")
 
         while True:
             if self._done_event.wait(0.100):
-                logging.info("Effects done")
+                LOG.info("Effects done")
                 self._done_event.clear()
 
                 if self._player is not None and not self._player.play_next():
-                    logging.info("Cleaning up")
+                    LOG.info("Cleaning up")
                     self._current_mode = Mode.stop()
                     self._access_base.set_mode(self._current_mode)
 
             if access_base.wait_for_change(0.100):
                 if not self.current_mode().equals(access_base.mode()):
-                    logging.info("Accessbase has changed!")
+                    LOG.info("Accessbase has changed!")
                     self.apply_mode(access_base.mode())
 
     def current_mode(self):

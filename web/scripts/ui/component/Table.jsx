@@ -30,11 +30,13 @@ define(['react'], function(React) {
     },
 
     renderRow: function(row, columns) {
+      var i = 0;
+      var self = this;
       return (
         <tr key={this.props.rowKey(row)} onClick={this.handleClickRow.bind(this, row)}>
-          { 
+          {
             this.props.columns.map(function(column) {
-              return <td>{column.value(row)}</td>  
+              return <td  key={self.props.rowKey(row) + '-' + i++}>{column.value(row)}</td>
             })
           }
         </tr>
