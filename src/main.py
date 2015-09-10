@@ -40,7 +40,7 @@ def interface_runner(accessbase):
 
     logging.basicConfig(level=logging.DEBUG)
     LOG = logging.getLogger(__name__)
-    
+
     def trigger_next():
         accessbase.play_next()
 

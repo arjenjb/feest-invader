@@ -21,7 +21,8 @@ define([
 			uid: random.guid(),
 			name: name,
 			configurations: [],
-            schedule: 'sequence'
+            schedule: 'sequence',
+            target: null
 		}, accessBase)
 	};
 
@@ -50,6 +51,16 @@ define([
         withName: function(name) {
             var data = this.clone();
             data._data.name = name;
+            return data;
+        },
+
+        target: function() {
+            return this._data.target;
+        },
+
+        withTarget: function(target) {
+            var data = this.clone();
+            data._data.target = !target || target.trim() == '' ? null : target;
             return data;
         },
 

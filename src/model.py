@@ -437,7 +437,7 @@ class Program(object):
             object.get('name'),
             map(EffectConfiguration.from_json, object.get('configurations', [])),
             object.get('schedule', 'sequence'),
-            object.get('target', -1)
+            object.get('target', None)
         )
 
     def to_json(self):

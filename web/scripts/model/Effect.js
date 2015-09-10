@@ -81,6 +81,8 @@ define(['tools/random', 'tools/json', 'model/ParameterValue'], function (random,
             var program = accessBase.getProgramByUid(uid);
             if (! program) return [];
             return program.getUsedComponents();
+        } else if (this.name() == '') {
+            return [];
         } else {
             return accessBase.getEffectDefinitionByName(this.name()).components();
         }

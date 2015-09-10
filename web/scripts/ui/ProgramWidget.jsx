@@ -132,10 +132,24 @@ define([
             accessBase.updateProgram(program, newProgram);
         },
 
+        handleTargetChange: function(target) {
+            var program = this.props.program;
+            this.props.accessBase.updateProgram(program, program.withTarget(target));
+        },
+
 		handleOnPlay: function() {
 			this.props.accessBase.setMode(
 				Mode.playProgram(this.props.program))
 		},
+
+        target: function() {
+            var target = this.props.program.target();
+            if (! target) {
+                return null;
+            } else {
+                return target;
+            }
+        },
 
 		render: function() {
 			return (
@@ -162,6 +176,10 @@ define([
      							onSelect={this.handleSequenceChanged}
 								selected={this.props.program.schedule()} />
                         </span>
+
+						<span className="label">Target</span>
+						<span className="value">
+                            <EditableLabel value={this.target()} emptyLabel="No target" onChange={this.handleTargetChange} /></span>
                     </p>
 
 					{this.props.program.configurationsSorted().map(function(configuration) {

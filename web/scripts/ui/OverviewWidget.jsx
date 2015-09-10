@@ -53,14 +53,24 @@ define([
 	        }
 	      ];
 
-	      var key = function(row) { return row.uid() }
+	      var key = function(row) { return row.uid() };
 
 	      return (
 	        <div>
 				<Controls accessBase={this.props.accessBase} />
+
+				<h2>Targets</h2>
+				<Table
+					className="panel targets"
+					rows={this.props.programs.filter(function(p) { return p.target() != null; })}
+					columns={columns}
+					rowKey={key}
+					onClickRow={this.openProgram} />
+
+				<h2>Programs</h2>
 				<Table
 					className="panel"
-					rows={this.props.programs}
+					rows={this.props.programs.filter(function(p) { return p.target() == null; })}
 					columns={columns}
 					rowKey={key}
 					onClickRow={this.openProgram} />

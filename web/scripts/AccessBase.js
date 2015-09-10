@@ -116,11 +116,19 @@ define([
     AccessBase.prototype.programsSorted = function(){
         return Array.prototype.slice.call(this.programs())
             .sort(function(a, b) {
+                if (a.target() != null) {
+                    if (b.target() != null) {
+                        return ((a.target() < b.target()) ? -1 : ((a.target() > b.target()) ? 1 : 0));
+                    } else {
+                        return -1;
+                    }
+                } else if (b.target() != null) {
+                    return 1;
+                }
+
                 return ((a.name() < b.name()) ? -1 : ((a.name() > b.name()) ? 1 : 0));
             });
     };
-
-
 
     AccessBase.prototype.getProgramByUid = function(uid) {
         var program = this.programs().find(function(each) { return each.uid() == uid; });
