@@ -134,6 +134,25 @@ class AccessBase(object):
 
         self.notify_changed()
 
+    def play_next(self):
+        programs = filter(lambda p: p.target() != -1, self.programs())
+        if len(programs) == 0:
+            return
+
+        if self.mode().is_stop():
+            self.set_mode(Mode.play_program(programs[0]))
+            return
+
+        playing = self.mode().program_uid()
+        l = len(programs)
+
+        for i in range(0, l):
+            if programs[i].uid() == playing:
+                self.set_mode(programs[(i + 1) % l])
+                return
+
+        self.set_mode(Mode.play_program(programs[0]))
+
     def version_changed(self):
         self._my_version = self._version.value
         self._mode = None
@@ -386,17 +405,21 @@ class EffectConfiguration(object):
 
 
 class Program(object):
-    def __init__(self, uid, name, configurations, schedule):
+    def __init__(self, uid, name, configurations, schedule, target):
         self._configurations = configurations
         self._name = name
         self._uid = uid
         self._schedule = schedule
+        self._target = target
 
     def uid(self):
         return self._uid
 
     def configurations(self):
         return self._configurations
+
+    def target(self):
+        return self._target
 
     def schedule(self):
         return self._schedule
@@ -413,7 +436,8 @@ class Program(object):
             object.get('uid'),
             object.get('name'),
             map(EffectConfiguration.from_json, object.get('configurations', [])),
-            object.get('schedule', 'sequence')
+            object.get('schedule', 'sequence'),
+            object.get('target', -1)
         )
 
     def to_json(self):
@@ -421,11 +445,17 @@ class Program(object):
             'uid': self._uid,
             'name': self._name,
             'configurations': map(EffectConfiguration.to_json, self._configurations),
-            'schedule': self._schedule
+            'schedule': self._schedule,
+            'target': self._target
         }
 
 
 class Mode(object):
+
+    @classmethod
+    def play_program(cls, program):
+        return Mode('play:program', program.uid())
+
     def __init__(self, state, program_uid=None, configuration_uid=None):
         self._state = state
         self._program_uid = program_uid
@@ -447,6 +477,9 @@ class Mode(object):
 
     def get_program_in(self, access_base):
         return access_base.get_program(self._program_uid)
+
+    def program_uid(self):
+        return self._program_uid
 
     def equals(self, other):
         return other is not None \

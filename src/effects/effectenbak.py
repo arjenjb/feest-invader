@@ -8,7 +8,6 @@ from model import Mode
 
 LOG = logging.getLogger(__name__)
 
-
 class ConfigurationPlayer:
     def __init__(self, configuration, effectenbak, done_signal):
 
