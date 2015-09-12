@@ -26,6 +26,15 @@ class Wings:
     def all(self, on):
         self.set_state(self.ALL, on)
 
+    def a(self, on):
+        self.set_state(self.RIGHT_A|self.LEFT_A, on)
+
+    def b(self, on):
+        self.set_state(self.RIGHT_B|self.LEFT_B, on)
+
+    def c(self, on):
+        self.set_state(self.RIGHT_C|self.LEFT_C, on)
+
     def left(self, on):
         self.set_state(self.LEFT, on)
 
@@ -57,8 +66,6 @@ class Wings:
         self.set_state(1 << i, on)
 
     def set_state(self, param, on):
-        state = self._state
-
         if on:
             state = self._state | param
         else:

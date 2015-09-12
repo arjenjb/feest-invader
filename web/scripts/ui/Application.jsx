@@ -54,7 +54,7 @@ define([
 
     renderOverview: function() {
       return (
-        <OverviewWidget programs={this.state.programs} onOpenProgram={this.openProgram} onAddProgram={this.addProgram}/>
+        <OverviewWidget programs={this.state.programs} accessBase={this.props.accessBase} onOpenProgram={this.openProgram} onAddProgram={this.addProgram}/>
       )
     },
 

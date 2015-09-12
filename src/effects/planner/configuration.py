@@ -18,7 +18,6 @@ def effect_runner_continuous(effect, schedule, stop, done):
 
     logging.info("Continuous runner done")
 
-
 def effect_runner_iterations(effect, schedule, stop, done):
     logging.info("Starting iterations runner")
 
